@@ -1,0 +1,46 @@
+<nodeDefs>
+    <nodeDef id="SECTRL" nls="CTRL">
+        <editors />
+        <sts>
+            <st id="ST" editor="BOOL" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="DISCOVER" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+    <nodeDef id="SESITE" nls="SITE">
+        <editors />
+        <sts>
+            <st id="ST" editor="WATT" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="QUERY" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+    <nodeDef id="SEINVERTER" nls="INV">
+        <editors />
+        <sts>
+            <st id="ST" editor="WATT" />
+            <st id="GV0" editor="RAWVAL" />
+            <st id="CPW" editor="RAWVAL" />
+            <st id="CLITEMP" editor="TEMPC" />
+            <st id="CV" editor="VOLT" />
+            <st id="GV1" editor="VOLT" />
+            <st id="GV2" editor="AMP" />
+            <st id="GV3" editor="FREQ" />
+            <st id="GV4" editor="IMODE" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="QUERY" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+</nodeDefs>

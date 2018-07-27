@@ -1,0 +1,27 @@
+# Solar Edge Controller
+ND-SECTRL-NAME = SolarEdge Controller
+ND-SECTRL-ICON = GenericCtl
+CMD-CTRL-DISCOVER-NAME = Re-Discover
+ST-CTRL-ST-NAME = NodeServer Online
+
+# SolarEdge Site
+ND-SESITE-NAME = SolarEdge Site
+ND-SESITE-ICON = EnergyMonitor
+ST-SITE-ST-NAME = Site Power
+
+# SolarEdge Inverter
+ND-SEINVERTER-NAME = SolarEdge Inverter
+ND-SEINVERTER-ICON = Electricity
+ST-INV-ST-NAME = Active Power
+ST-INV-GV0-NAME = Reactive Power (VAR)
+ST-INV-CPW-NAME = Apparent Power (VA)
+ST-INV-CLITEMP-NAME = Temperature
+ST-INV-CV-NAME = AC Voltage
+ST-INV-GV1-NAME = DC Voltage
+ST-INV-GV2-NAME = AC Current
+ST-INV-GV3-NAME = Frequency
+ST-INV-GV4-NAME = Mode
+
+MODE_SEL-0 = Unknown
+MODE_SEL-1 = Starting
+MODE_SEL-2 = MPPT

@@ -1,0 +1,21 @@
+{
+    "name": "SolarEdge",
+    "docs": "https://github.com/exking/udi-solaredge-poly",
+    "type": "python3",
+    "executable": "solaredge-poly.py",
+    "install": "install.sh",
+    "description": "Solar Edge Control",
+    "notice": "",
+    "shortPoll": "600",
+    "longPoll": "1200",
+    "credits": [
+        {
+            "title": "NodeServer to integrate with Solar Edge system",
+            "author": "xKing",
+            "version": "0.0.1",
+            "date": "July 26, 2018",
+            "source": "https://github.com/exking/udi-solaredge-poly",
+            "license": "https://raw.githubusercontent.com/exking/udi-solaredge-poly/master/LICENSE"
+        }
+    ]
+}
