@@ -4,7 +4,7 @@
     "type": "python3",
     "executable": "solaredge-poly.py",
     "install": "install.sh",
-    "description": "Solar Edge Control",
+    "description": "Solar Edge Cloud Integration",
     "notice": "",
     "shortPoll": "600",
     "longPoll": "1200",

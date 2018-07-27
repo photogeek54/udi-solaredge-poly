@@ -200,6 +200,8 @@ class SEInverter(polyinterface.Node):
         self.updateInfo()
 
     def updateInfo(self, long_poll=False):
+        if long_poll:
+            return True
         url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+self.controller._start_time()+'&endTime='+self.controller._end_time()+'&api_key='+self.controller.api_key
         inverter_data = self.controller.api_request(url)
         LOGGER.debug(inverter_data)
