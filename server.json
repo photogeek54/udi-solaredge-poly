@@ -4,6 +4,7 @@
     "type": "python3",
     "executable": "solaredge-poly.py",
     "install": "install.sh",
+    "install_cloud": "install_cloud.sh",
     "description": "Solar Edge Cloud Integration",
     "notice": "",
     "shortPoll": "600",
@@ -12,7 +13,7 @@
         {
             "title": "NodeServer to integrate with Solar Edge system",
             "author": "xKing",
-            "version": "0.0.1",
+            "version": "0.0.2",
             "date": "July 26, 2018",
             "source": "https://github.com/exking/udi-solaredge-poly",
             "license": "https://raw.githubusercontent.com/exking/udi-solaredge-poly/master/LICENSE"

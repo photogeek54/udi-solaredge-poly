@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
-import polyinterface
+CLOUD = False
+
+try:
+    import polyinterface
+except ImportError:
+    import pgc_interface as polyinterface
+    CLOUD = True
 import sys
 import http.client
 import datetime
