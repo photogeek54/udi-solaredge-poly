@@ -104,7 +104,7 @@ class Controller(polyinterface.Controller):
     def updateInfo(self, long_poll=False):
         pass
 
-    def query(self):
+    def query(self, command=None):
         for node in self.nodes:
             self.nodes[node].reportDrivers()
 
@@ -188,7 +188,7 @@ class SESite(polyinterface.Node):
                 if 'value' in datapoint:
                     self.setDriver('ST', float(datapoint['value']))
 
-    def query(self):
+    def query(self, command=None):
         self.reportDrivers()
 
     id = 'SESITE'
@@ -237,7 +237,7 @@ class SEInverter(polyinterface.Node):
         else:
             self.setDriver('GV4', 0)
 
-    def query(self):
+    def query(self, command=None):
         self.reportDrivers()
 
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 73},
