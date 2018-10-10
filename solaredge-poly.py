@@ -10,7 +10,6 @@ except ImportError:
 import sys
 import http.client
 from datetime import datetime, timedelta
-from pytz import timezone
 import pytz
 import logging
 import json
