@@ -9,8 +9,9 @@ except ImportError:
     CLOUD = True
 import sys
 import http.client
-import datetime
-import time
+from datetime import datetime, timedelta
+from pytz import timezone
+import pytz
 import logging
 import json
 
@@ -28,13 +29,10 @@ class Controller(polyinterface.Controller):
         self.primary = self.address
         self.api_key = None
         self.conn = None
-        self.site_offset = 0
 
     def start(self):
         # LOGGER.setLevel(logging.INFO)
         LOGGER.info('Started SolarEdge controller')
-        if 'site_offset' in self.polyConfig['customParams']:
-            self.site_offset = int(self.polyConfig['customParams']['site_offset'])
         if 'api_key' not in self.polyConfig['customParams']:
             LOGGER.error('Please specify api_key in the NodeServer configuration parameters');
             return False
@@ -108,17 +106,15 @@ class Controller(polyinterface.Controller):
         for node in self.nodes:
             self.nodes[node].reportDrivers()
 
-    def _start_time(self):
+    def _start_time(self, site_tz):
         # Returns site datetime - 60 minutes
-        ts = time.time()
-        ts_site = ts + self.site_offset*60 - 60*60
-        return datetime.datetime.fromtimestamp(ts_site).strftime('%Y-%m-%d%%20%H:%M:%S')
+        st_time = datetime.utcnow().replace(tzinfo=pytz.utc) - timedelta(minutes=60)
+        return st_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
 
-    def _end_time(self):
+    def _end_time(self, site_tz):
         # Returns current site time
-        ts = time.time()
-        ts_site = ts + self.site_offset*60
-        return datetime.datetime.fromtimestamp(ts_site).strftime('%Y-%m-%d%%20%H:%M:%S')
+        utc_time = datetime.utcnow().replace(tzinfo=pytz.utc)
+        return utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
 
     def discover(self, command=None):
         LOGGER.info('Discovering SolarEdge sites and equipment...')
@@ -132,13 +128,14 @@ class Controller(polyinterface.Controller):
             return False
         for site in site_list['sites']['site']:
             name = site['name']
+            site_tz = site['location']['timeZone']
             address = str(site['id'])
-            LOGGER.info('Found {} site id: {}, name: {}'.format(site['status'], address, name))
+            LOGGER.info('Found {} site id: {}, name: {}, TZ: {}'.format(site['status'], address, name, site_tz))
             if not address in self.nodes:
                 LOGGER.info('Adding site id: {}'.format(address))
-                self.addNode(SESite(self, address, address, name))
+                self.addNode(SESite(self, address, address, name, site_tz))
             LOGGER.info('Requesting site inventory...')
-            site_inv =  self.api_request('/site/'+address+'/inventory?startTime='+self._start_time()+'&endTime='+self._end_time()+'&api_key='+self.api_key)
+            site_inv =  self.api_request('/site/'+address+'/inventory?startTime='+self._start_time(site_tz)+'&endTime='+self._end_time(site_tz)+'&api_key='+self.api_key)
             if site_inv is None:
                 return False
             num_meter = len(site_inv['Inventory']['meters'])
@@ -154,7 +151,7 @@ class Controller(polyinterface.Controller):
                 if not inv_addr in self.nodes:
                     LOGGER.info('Adding inverter {}'.format(inv_sn))
                     if inverter['model'] in SINGLE_PHASE:
-                        self.addNode(SEInverter(self, address, inv_addr, inv_name, address, inv_sn))
+                        self.addNode(SEInverter(self, address, inv_addr, inv_name, address, inv_sn, site_tz))
                     else:
                         LOGGER.error('Model {} is not yet supported'.format(inverter['model']))
 
@@ -164,8 +161,9 @@ class Controller(polyinterface.Controller):
 
 
 class SESite(polyinterface.Node):
-    def __init__(self, controller, primary, address, name):
+    def __init__(self, controller, primary, address, name, site_tz):
         super().__init__(controller, primary, address, name)
+        self.site_tz = site_tz
 
     def start(self):
         self.updateInfo(long_poll=True)
@@ -173,7 +171,7 @@ class SESite(polyinterface.Node):
     def updateInfo(self, long_poll=False):
         if not long_poll:
             return True
-        url = '/site/'+self.address+'/powerDetails?startTime='+self.controller._start_time()+'&endTime='+self.controller._end_time()+'&api_key='+self.controller.api_key
+        url = '/site/'+self.address+'/powerDetails?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
         power_data = self.controller.api_request(url)
         LOGGER.debug(power_data)
         if power_data is None:
@@ -197,10 +195,11 @@ class SESite(polyinterface.Node):
 
 
 class SEInverter(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, site_id, serial_num):
+    def __init__(self, controller, primary, address, name, site_id, serial_num, site_tz):
         super().__init__(controller, primary, address, name)
         self.serial_num = serial_num
         self.site_id = site_id
+        self.site_tz = site_tz
 
     def start(self):
         self.updateInfo()
@@ -208,7 +207,7 @@ class SEInverter(polyinterface.Node):
     def updateInfo(self, long_poll=False):
         if long_poll:
             return True
-        url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+self.controller._start_time()+'&endTime='+self.controller._end_time()+'&api_key='+self.controller.api_key
+        url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
         inverter_data = self.controller.api_request(url)
         LOGGER.debug(inverter_data)
         if inverter_data is None:
