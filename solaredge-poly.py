@@ -225,7 +225,8 @@ class SEInverter(polyinterface.Node):
         self.setDriver('CPW', float(data['L1Data']['apparentPower']))
         self.setDriver('CLITEMP', float(data['temperature']))
         self.setDriver('CV', float(data['L1Data']['acVoltage']))
-        self.setDriver('GV1', float(data['dcVoltage']))
+        if data['dcVoltage'] is not None:
+            self.setDriver('GV1', float(data['dcVoltage']))
         self.setDriver('GV2', round(float(data['L1Data']['acCurrent']), 1))
         self.setDriver('GV3', round(float(data['L1Data']['acFrequency']), 1))
         if data['inverterMode'] == 'MPPT':
