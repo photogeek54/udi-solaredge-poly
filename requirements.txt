@@ -1,2 +1,2 @@
-polyinterface>=2.0.28
+polyinterface>=2.0.29
 pytz>=2018.5
