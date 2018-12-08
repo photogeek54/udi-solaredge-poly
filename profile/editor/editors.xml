@@ -14,6 +14,9 @@
     <editor id="WATT">
         <range uom="73" min="0" max="40000" prec="1" />
     </editor>
+    <editor id="WATTCH">
+        <range uom="73" min="-30000" max="30000" prec="1" />
+    </editor>
     <editor id="RAWVAL">
         <range uom="56" min="-1000" max="10000" prec="1" />
     </editor>
@@ -22,5 +25,8 @@
     </editor>
     <editor id="IMODE">
         <range uom="25" min="0" max="2" nls="MODE_SEL" />
+    </editor>
+    <editor id="CHARGE">
+        <range uom="51" min="0" max="100" prec="1" />
     </editor>
 </editors>

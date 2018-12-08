@@ -15,6 +15,10 @@
         <editors />
         <sts>
             <st id="ST" editor="WATT" />
+            <st id="GV0" editor="WATT" />
+            <st id="GV1" editor="WATT" />
+            <st id="GV2" editor="WATT" />
+            <st id="GV3" editor="WATT" />
         </sts>
         <cmds>
             <sends />
@@ -35,6 +39,19 @@
             <st id="GV2" editor="AMP" />
             <st id="GV3" editor="FREQ" />
             <st id="GV4" editor="IMODE" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="QUERY" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+    <nodeDef id="SEBATT" nls="BATT">
+        <editors />
+        <sts>
+            <st id="ST" editor="WATTCH" />
+            <st id="CPW" editor="CHARGE" />
         </sts>
         <cmds>
             <sends />

@@ -7,7 +7,11 @@ ST-CTRL-ST-NAME = NodeServer Online
 # SolarEdge Site
 ND-SESITE-NAME = SolarEdge Site
 ND-SESITE-ICON = EnergyMonitor
-ST-SITE-ST-NAME = Site Power
+ST-SITE-ST-NAME = Production
+ST-SITE-GV0-NAME = Consumption
+ST-SITE-GV1-NAME = Purchased
+ST-SITE-GV2-NAME = Self Consumption
+ST-SITE-GV3-NAME = Feed In
 
 # SolarEdge Inverter
 ND-SEINVERTER-NAME = SolarEdge Inverter
@@ -21,6 +25,12 @@ ST-INV-GV1-NAME = DC Voltage
 ST-INV-GV2-NAME = AC Current
 ST-INV-GV3-NAME = Frequency
 ST-INV-GV4-NAME = Mode
+
+# SolarEdge Battery
+ND-SEBATT-NAME = SolarEdge Battery
+ND-SEBATT-ICON = Electricity
+ST-BATT-ST-NAME = Power State
+ST-BATT-CPW-NAME = Charge state
 
 MODE_SEL-0 = Unknown
 MODE_SEL-1 = Starting
