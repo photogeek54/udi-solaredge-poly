@@ -204,31 +204,46 @@ class SESite(polyinterface.Node):
         else:
             for meter in power_data['powerDetails']['meters']:
                 if meter['type'] == 'Production':
-                    datapoint = meter['values'][-1]
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue
                     if len(datapoint) == 0:
                         self.setDriver('ST', 0)
                     if 'value' in datapoint:
                         self.setDriver('ST', float(datapoint['value']))
                 elif meter['type'] == 'Consumption':
-                    datapoint = meter['values'][-1]
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue
                     if len(datapoint) == 0:
                         self.setDriver('GV0', 0)
                     if 'value' in datapoint:
                         self.setDriver('GV0', float(datapoint['value']))
                 elif meter['type'] == 'Purchased':
-                    datapoint = meter['values'][-1]
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue
                     if len(datapoint) == 0:
                         self.setDriver('GV1', 0)
                     if 'value' in datapoint:
                         self.setDriver('GV1', float(datapoint['value']))
                 elif meter['type'] == 'SelfConsumption':
-                    datapoint = meter['values'][-1]
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue
                     if len(datapoint) == 0:
                         self.setDriver('GV2', 0)
                     if 'value' in datapoint:
                         self.setDriver('GV2', float(datapoint['value']))
                 elif meter['type'] == 'FeedIn':
-                    datapoint = meter['values'][-1]
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue
                     if len(datapoint) == 0:
                         self.setDriver('GV3', 0)
                     if 'value' in datapoint:
