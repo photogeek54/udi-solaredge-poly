@@ -51,7 +51,8 @@
         <editors />
         <sts>
             <st id="ST" editor="WATTCH" />
-            <st id="CPW" editor="CHARGE" />
+            <st id="BATLVL" editor="CHARGE" />
+            <st id="GPV" editor="CAPACITY" />
         </sts>
         <cmds>
             <sends />

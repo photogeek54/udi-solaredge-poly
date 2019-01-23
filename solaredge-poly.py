@@ -160,7 +160,7 @@ class Controller(polyinterface.Controller):
                 batt_addr = battery['SN'].replace('-','').lower()[:14]
                 if not batt_addr in self.nodes:
                     LOGGER.info('Adding battery {}'.format(batt_sn))
-                    self.addNode(SEBattery(self, address, batt_addr, batt_name, address, batt_sn, site_tz))
+                    self.addNode(SEBattery(self, address, batt_addr, batt_name, address, batt_sn, site_tz, battery))
                     self.batteries.append(batt_sn)
 
     id = 'SECTRL'
@@ -315,18 +315,19 @@ class SEInverter(polyinterface.Node):
                }
 
 class SEBattery(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, site_id, serial_num, site_tz):
+    def __init__(self, controller, primary, address, name, site_id, serial_num, site_tz, battery):
         super().__init__(controller, primary, address, name)
         self.serial_num = serial_num
         self.site_id = site_id
         self.site_tz = site_tz
+        self.battery = battery
 
     def start(self):
         self.updateInfo()
 
     def updateInfo(self, long_poll=False):
         ''' Battery does not query anything right now but depends on the site node to supply information to save on the number of API calls '''
-        pass
+        self.setDriver('GPV', float(self.battery['nameplateCapacity']))
 
     def updateData(self, batt_data=None):
         LOGGER.debug(batt_data)
@@ -335,13 +336,14 @@ class SEBattery(polyinterface.Node):
         # Take latest data point
         data = batt_data[-1]
         self.setDriver('ST', data['power'])
-        self.setDriver('CPW', round(float(data['batteryPercentageState']), 1))
+        self.setDriver('BATLVL', round(float(data['batteryPercentageState']), 1))
 
     def query(self, command=None):
         self.reportDrivers()
 
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 73},
-               {'driver': 'CPW', 'value': 0, 'uom': 51}
+               {'driver': 'BATLVL', 'value': 0, 'uom': 51},
+               {'driver': 'GPV', 'value': 0, 'uom': 56}
               ]
 
     id = 'SEBATT'

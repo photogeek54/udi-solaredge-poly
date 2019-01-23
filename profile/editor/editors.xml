@@ -29,4 +29,7 @@
     <editor id="CHARGE">
         <range uom="51" min="0" max="100" prec="1" />
     </editor>
+    <editor id="CAPACITY">
+        <range uom="56" min="0" max="50000" prec="1" />
+    </editor>
 </editors>

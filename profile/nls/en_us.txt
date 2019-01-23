@@ -30,7 +30,8 @@ ST-INV-GV4-NAME = Mode
 ND-SEBATT-NAME = SolarEdge Battery
 ND-SEBATT-ICON = Electricity
 ST-BATT-ST-NAME = Power State
-ST-BATT-CPW-NAME = Charge state
+ST-BATT-BATLVL-NAME = Charge state
+ST-BATT-GPV-NAME = Nameplate capacity
 
 MODE_SEL-0 = Unknown
 MODE_SEL-1 = Starting
