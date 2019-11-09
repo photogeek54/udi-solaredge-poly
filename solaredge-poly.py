@@ -16,7 +16,7 @@ import json
 
 LOGGER = polyinterface.LOGGER
 SE_API_URL = 'monitoringapi.solaredge.com'
-SINGLE_PHASE = [ 'SE3000', 'SE3800', 'SE5000', 'SE6000', 'SE7600', 'SE10000', 'SE11400' ]
+SINGLE_PHASE = [ 'SE3000', 'SE3800', 'SE5000', 'SE6000', 'SE7600', 'SE10000', 'SE11400', 'SE5000H-US000BNU4' ]
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
 
@@ -41,7 +41,7 @@ class Controller(polyinterface.Controller):
         if data is None:
             return False
         if 'version' in data:
-            LOGGER.info('Successfully connected to the SolarEdge API Version {}'.format(data['version']))
+            LOGGER.info(f"Successfully connected to the SolarEdge API Version {data['version']}")
             self.discover()
         else:
             LOGGER.error('API request failed: {}'.format(json.dumps(data)))
