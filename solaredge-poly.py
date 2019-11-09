@@ -177,77 +177,80 @@ class SESite(polyinterface.Node):
         self.updateInfo(long_poll=True)
 
     def updateInfo(self, long_poll=False):
-        if not long_poll:
-            return True
-        url = '/site/'+self.address+'/powerDetails?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
-        power_data = self.controller.api_request(url)
+        try:
+            if not long_poll:
+                return True
+            url = '/site/'+self.address+'/powerDetails?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
+            power_data = self.controller.api_request(url)
 
-        if len(self.controller.batteries) > 0:
-            url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.controller.batteries))+'&startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
-            storage_data = self.controller.api_request(url)
-            LOGGER.debug(storage_data)
-            for battery in storage_data['storageData']['batteries']:
-                batt_sn = battery['serialNumber']
-                batt_addr = battery['serialNumber'].replace('-','').lower()[:14]
-                if battery['telemetryCount'] > 0:
-                    self.controller.nodes[batt_addr].updateData(battery['telemetries'])
-                else:
-                    LOGGER.debug('no battery telemetries received')
+            if len(self.controller.batteries) > 0:
+                url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.controller.batteries))+'&startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
+                storage_data = self.controller.api_request(url)
+                LOGGER.debug(storage_data)
+                for battery in storage_data['storageData']['batteries']:
+                    batt_sn = battery['serialNumber']
+                    batt_addr = battery['serialNumber'].replace('-','').lower()[:14]
+                    if battery['telemetryCount'] > 0:
+                        self.controller.nodes[batt_addr].updateData(battery['telemetries'])
+                    else:
+                        LOGGER.debug('no battery telemetries received')
 
-        LOGGER.debug(power_data)
-        if power_data is None:
-            self.setDriver('ST', 0)
-            self.setDriver('GV0', 0)
-            self.setDriver('GV1', 0)
-            self.setDriver('GV2', 0)
-            self.setDriver('GV3', 0)
-        else:
-            for meter in power_data['powerDetails']['meters']:
-                if meter['type'] == 'Production':
-                    try:
-                        datapoint = meter['values'][-1]
-                    except:
-                        continue
-                    if len(datapoint) == 0:
-                        self.setDriver('ST', 0)
-                    if 'value' in datapoint:
-                        self.setDriver('ST', float(datapoint['value']))
-                elif meter['type'] == 'Consumption':
-                    try:
-                        datapoint = meter['values'][-1]
-                    except:
-                        continue
-                    if len(datapoint) == 0:
-                        self.setDriver('GV0', 0)
-                    if 'value' in datapoint:
-                        self.setDriver('GV0', float(datapoint['value']))
-                elif meter['type'] == 'Purchased':
-                    try:
-                        datapoint = meter['values'][-1]
-                    except:
-                        continue
-                    if len(datapoint) == 0:
-                        self.setDriver('GV1', 0)
-                    if 'value' in datapoint:
-                        self.setDriver('GV1', float(datapoint['value']))
-                elif meter['type'] == 'SelfConsumption':
-                    try:
-                        datapoint = meter['values'][-1]
-                    except:
-                        continue
-                    if len(datapoint) == 0:
-                        self.setDriver('GV2', 0)
-                    if 'value' in datapoint:
-                        self.setDriver('GV2', float(datapoint['value']))
-                elif meter['type'] == 'FeedIn':
-                    try:
-                        datapoint = meter['values'][-1]
-                    except:
-                        continue
-                    if len(datapoint) == 0:
-                        self.setDriver('GV3', 0)
-                    if 'value' in datapoint:
-                        self.setDriver('GV3', float(datapoint['value']))
+            LOGGER.debug(power_data)
+            if power_data is None:
+                self.setDriver('ST', 0)
+                self.setDriver('GV0', 0)
+                self.setDriver('GV1', 0)
+                self.setDriver('GV2', 0)
+                self.setDriver('GV3', 0)
+            else:
+                for meter in power_data['powerDetails']['meters']:
+                    if meter['type'] == 'Production':
+                        try:
+                            datapoint = meter['values'][-1]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('ST', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('ST', float(datapoint['value']))
+                    elif meter['type'] == 'Consumption':
+                        try:
+                            datapoint = meter['values'][-1]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV0', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV0', float(datapoint['value']))
+                    elif meter['type'] == 'Purchased':
+                        try:
+                            datapoint = meter['values'][-1]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV1', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV1', float(datapoint['value']))
+                    elif meter['type'] == 'SelfConsumption':
+                        try:
+                            datapoint = meter['values'][-1]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV2', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV2', float(datapoint['value']))
+                    elif meter['type'] == 'FeedIn':
+                        try:
+                            datapoint = meter['values'][-1]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV3', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV3', float(datapoint['value']))
+        except Exception as ex:
+            LOGGER.error('SESite updateInfo failed! {}'.format(ex))
 
     def query(self, command=None):
         self.reportDrivers()
@@ -275,41 +278,44 @@ class SEInverter(polyinterface.Node):
     def updateInfo(self, long_poll=False):
         if long_poll:
             return True
-        url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
-        inverter_data = self.controller.api_request(url)
-        LOGGER.debug(inverter_data)
-        if inverter_data is None:
-            return False
-        datapoints = int(inverter_data['data']['count'])
-        if datapoints < 1:
-            LOGGER.warning('No Inverter data received, skipping...')
-            return False
-        # Take latest data point
-        data = inverter_data['data']['telemetries'][-1]
-        if not 'L1Data' in data:
-            LOGGER.error('Is this a single phase inverter? {}'.format(self.serial_num))
-            return False
-        self.setDriver('ST', float(data['L1Data']['activePower']))
-        if 'reactivePower' in data['L1Data']:
-            self.setDriver('GV0', float(data['L1Data']['reactivePower']))
-        else:
-            self.setDriver('GV0', 0)
-        if 'apparentPower' in data['L1Data']:
-            self.setDriver('CPW', float(data['L1Data']['apparentPower']))
-        else:
-            self.setDriver('CPW', 0)
-        self.setDriver('CLITEMP', float(data['temperature']))
-        self.setDriver('CV', float(data['L1Data']['acVoltage']))
-        if data['dcVoltage'] is not None:
-            self.setDriver('GV1', float(data['dcVoltage']))
-        self.setDriver('GV2', round(float(data['L1Data']['acCurrent']), 1))
-        self.setDriver('GV3', round(float(data['L1Data']['acFrequency']), 1))
-        if data['inverterMode'] == 'MPPT':
-            self.setDriver('GV4', 2)
-        elif data['inverterMode'] == 'STARTING':
-            self.setDriver('GV4', 1)
-        else:
-            self.setDriver('GV4', 0)
+        try:
+            url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
+            inverter_data = self.controller.api_request(url)
+            LOGGER.debug(inverter_data)
+            if inverter_data is None:
+                return False
+            datapoints = int(inverter_data['data']['count'])
+            if datapoints < 1:
+                LOGGER.warning('No Inverter data received, skipping...')
+                return False
+            # Take latest data point
+            data = inverter_data['data']['telemetries'][-1]
+            if not 'L1Data' in data:
+                LOGGER.error('Is this a single phase inverter? {}'.format(self.serial_num))
+                return False
+            self.setDriver('ST', float(data['L1Data']['activePower']))
+            if 'reactivePower' in data['L1Data']:
+                self.setDriver('GV0', float(data['L1Data']['reactivePower']))
+            else:
+                self.setDriver('GV0', 0)
+            if 'apparentPower' in data['L1Data']:
+                self.setDriver('CPW', float(data['L1Data']['apparentPower']))
+            else:
+                self.setDriver('CPW', 0)
+            self.setDriver('CLITEMP', float(data['temperature']))
+            self.setDriver('CV', float(data['L1Data']['acVoltage']))
+            if data['dcVoltage'] is not None:
+                self.setDriver('GV1', float(data['dcVoltage']))
+            self.setDriver('GV2', round(float(data['L1Data']['acCurrent']), 1))
+            self.setDriver('GV3', round(float(data['L1Data']['acFrequency']), 1))
+            if data['inverterMode'] == 'MPPT':
+                self.setDriver('GV4', 2)
+            elif data['inverterMode'] == 'STARTING':
+                self.setDriver('GV4', 1)
+            else:
+                self.setDriver('GV4', 0)
+        except Exception as ex:
+            LOGGER.error('SEInverter updateInfo failed! {}'.format(ex))
 
     def query(self, command=None):
         self.reportDrivers()
@@ -341,8 +347,11 @@ class SEBattery(polyinterface.Node):
         self.updateInfo()
 
     def updateInfo(self, long_poll=False):
-        ''' Battery does not query anything right now but depends on the site node to supply information to save on the number of API calls '''
-        self.setDriver('GPV', float(self.battery['nameplateCapacity']))
+        try:
+            ''' Battery does not query anything right now but depends on the site node to supply information to save on the number of API calls '''
+            self.setDriver('GPV', float(self.battery['nameplateCapacity']))
+        except Exception as ex:
+            LOGGER.error('SEBattery updateInfo failed! {}'.format(ex))
 
     def updateData(self, batt_data=None):
         LOGGER.debug(batt_data)
