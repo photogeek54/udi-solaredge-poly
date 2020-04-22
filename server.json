@@ -13,7 +13,7 @@
         {
             "title": "NodeServer to integrate with Solar Edge system",
             "author": "xKing",
-            "version": "0.0.5",
+            "version": "0.0.6",
             "date": "July 26, 2018",
             "source": "https://github.com/UniversalDevicesInc/udi-solaredge-poly",
             "license": "https://raw.githubusercontent.com/UniversalDevicesInc/udi-solaredge-poly/master/LICENSE"

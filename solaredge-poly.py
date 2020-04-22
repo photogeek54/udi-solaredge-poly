@@ -16,7 +16,7 @@ import json
 
 LOGGER = polyinterface.LOGGER
 SE_API_URL = 'monitoringapi.solaredge.com'
-SINGLE_PHASE = [ 'SE3000', 'SE3800', 'SE5000', 'SE6000', 'SE7600', 'SE10000', 'SE11400', 'SE5000H-US000BNU4', 'SE7600H-US000BNU4', 'SE10000H-US000BNU4' ]
+SINGLE_PHASE = [ 'SE3000', 'SE3800', 'SE5000', 'SE6000', 'SE7600', 'SE10000', 'SE11400', 'SE5000H', 'SE7600H', 'SE10000H' ]
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
 
@@ -148,9 +148,13 @@ class Controller(polyinterface.Controller):
                 inv_name = inverter['name']
                 inv_sn = inverter['SN']
                 inv_addr = inverter['SN'].replace('-','').lower()[:14]
+                if '-' in inverter['model']:
+                    inv_model = inverter['model'].split('-')[0]
+                else:
+                    inv_model = inverter['model']
                 if not inv_addr in self.nodes:
                     LOGGER.info('Adding inverter {}'.format(inv_sn))
-                    if inverter['model'] in SINGLE_PHASE:
+                    if inv_model in SINGLE_PHASE:
                         self.addNode(SEInverter(self, address, inv_addr, inv_name, address, inv_sn, site_tz))
                     else:
                         LOGGER.error('Model {} is not yet supported'.format(inverter['model']))
