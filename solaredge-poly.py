@@ -325,8 +325,8 @@ class SEInverter(polyinterface.Node):
         self.reportDrivers()
 
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 73},
-               {'driver': 'GV0', 'value': 0, 'uom': 56},
-               {'driver': 'CPW', 'value': 0, 'uom': 56},
+               {'driver': 'GV0', 'value': 0, 'uom': 136},
+               {'driver': 'CPW', 'value': 0, 'uom': 135},
                {'driver': 'CLITEMP', 'value': 0, 'uom': 4},
                {'driver': 'CV', 'value': 0, 'uom': 72},
                {'driver': 'GV1', 'value': 0, 'uom': 72},

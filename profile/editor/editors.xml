@@ -17,8 +17,11 @@
     <editor id="WATTCH">
         <range uom="73" min="-30000" max="30000" prec="1" />
     </editor>
-    <editor id="RAWVAL">
-        <range uom="56" min="-1000" max="10000" prec="1" />
+    <editor id="POW">
+        <range uom="135" min="-1000" max="10000" prec="1" />
+    </editor>
+    <editor id="POWR">
+        <range uom="136" min="-1000" max="10000" prec="1" />
     </editor>
     <editor id="FREQ">
         <range uom="90" min="0" max="100" prec="1" />

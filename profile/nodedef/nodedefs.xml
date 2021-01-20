@@ -31,8 +31,8 @@
         <editors />
         <sts>
             <st id="ST" editor="WATT" />
-            <st id="GV0" editor="RAWVAL" />
-            <st id="CPW" editor="RAWVAL" />
+            <st id="GV0" editor="POWR" />
+            <st id="CPW" editor="POW" />
             <st id="CLITEMP" editor="TEMPC" />
             <st id="CV" editor="VOLT" />
             <st id="GV1" editor="VOLT" />
