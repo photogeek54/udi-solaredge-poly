@@ -4,19 +4,30 @@
     "type": "python3",
     "executable": "solaredge-poly.py",
     "install": "install.sh",
-    "install_cloud": "install_cloud.sh",
     "description": "Solar Edge Cloud Integration",
     "notice": "",
     "shortPoll": "600",
     "longPoll": "1200",
+	"customParams": {
+		"api_key": ""
+	},
     "credits": [
         {
             "title": "NodeServer to integrate with Solar Edge system",
             "author": "xKing",
-            "version": "0.0.8",
-            "date": "July 26, 2018",
+            "version": "1.0.0",
+            "date": "September 1, 2021",
             "source": "https://github.com/UniversalDevicesInc/udi-solaredge-poly",
             "license": "https://raw.githubusercontent.com/UniversalDevicesInc/udi-solaredge-poly/master/LICENSE"
         }
-    ]
+    ],
+	"store": {
+		"developer": bpaauwe@bobsplace.com",
+		"purchaseOptions: [
+			{
+				"isPerpetual": true,
+				"price": 0
+			}
+		]
+	}
 }

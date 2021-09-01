@@ -1,84 +1,95 @@
 #!/usr/bin/env python3
 
-CLOUD = False
-
-try:
-    import polyinterface
-except ImportError:
-    import pgc_interface as polyinterface
-    CLOUD = True
+import udi_interface
 import sys
 import http.client
+import requests
 from datetime import datetime, timedelta
 import pytz
 import logging
 import json
 
-LOGGER = polyinterface.LOGGER
+LOGGER = udi_interface.LOGGER
+Custom = udi_interface.Custom
+
 SE_API_URL = 'monitoringapi.solaredge.com'
 SINGLE_PHASE = [ 'SE3000', 'SE3000A', 'SE3800', 'SE3800A', 'SE3800H', 'SE5000', 'SE6000', 'SE7600', 'SE7600A', 'SE10000', 'SE11400', 'SE5000H', 'SE7600H', 'SE10000H', 'SE10000A' ]
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
 
-class Controller(polyinterface.Controller):
-    def __init__(self, polyglot):
-        super().__init__(polyglot)
+def _start_time(site_tz):
+    # Returns site datetime - 60 minutes
+    st_time = datetime.utcnow().replace(tzinfo=pytz.utc) - timedelta(minutes=60)
+    return st_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
+
+def _end_time(site_tz):
+    # Returns current site time
+    utc_time = datetime.utcnow().replace(tzinfo=pytz.utc)
+    return utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
+
+def _api_request(url):
+    full = 'https://' + SE_API_URL + url
+    try:
+        c = requests.get(full)
+        jdata = c.json()
+        c.close()
+    except Exception as e:
+        LOGGER.error('Request failed: {}'.format(e))
+        jdata = None
+
+    return jdata
+
+class Controller(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name):
+        super().__init__(polyglot, primary, address, name)
+        self.poly = polyglot
         self.name = 'SolarEdge Controller'
-        self.address = 'sectrl'
-        self.primary = self.address
+        self.address = address
+        self.primary = primary
         self.api_key = None
         self.conn = None
         self.batteries = []
+        self.Parameters = Custom(polyglot, 'customparams')
+
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.CUSTOMPARAMS, self.handleParameters)
+        self.poly.ready()
+        self.poly.addNode(self)
+
+    def handleParameters(self, params):
+        validKey = False
+        self.Parameters.load(params)
+        self.poly.Notices.clear()
+
+        if self.Parameters['api_key'] is not None:
+            if len(self.Parameters['api_key']) > 10:
+                validKey = True
+            else:
+                LOGGER.debug('API Key {} is invalid'.format(self.Parameters['api_key']))
+        else:
+            self.poly.Notices['key'] = 'Please specify api_key in NodeServer configuration parameters'
+
+        if validKey:
+            self.api_key = self.Parameters['api_key']
+            data = _api_request('/version/current?api_key='+self.api_key)
+            if data is None:
+                LOGGER.info('API request failed. Invalid api key?')
+                return
+
+            if 'version' in data:
+                LOGGER.info(f"Successfully connected to the SolarEdge API Version {data['version']}")
+                self.discover()
+            else:
+                LOGGER.error('API request failed: {}'.format(json.dumps(data)))
+                self.api_close()
+            self.api_close()
+
 
     def start(self):
         # LOGGER.setLevel(logging.INFO)
         LOGGER.info('Started SolarEdge controller')
-        if 'api_key' not in self.polyConfig['customParams']:
-            LOGGER.error('Please specify api_key in the NodeServer configuration parameters');
-            return False
-        self.api_key = self.polyConfig['customParams']['api_key']
-        data = self.api_request('/version/current?api_key='+self.api_key)
-        if data is None:
-            return False
-        if 'version' in data:
-            LOGGER.info(f"Successfully connected to the SolarEdge API Version {data['version']}")
-            self.discover()
-        else:
-            LOGGER.error('API request failed: {}'.format(json.dumps(data)))
-            self.api_close()
-            return False
-        self.api_close()
-
-    def api_request(self, url):
-        if self.conn is None:
-            self.conn = http.client.HTTPSConnection(SE_API_URL)
-        try:
-            self.conn.request('GET', url)
-            response = self.conn.getresponse()
-        except Exception as ex:
-            LOGGER.error('Failed to connect to SolarEdge API: {}'.format(ex))
-            self.api_close()
-            # retry once
-            self.conn = http.client.HTTPSConnection(SE_API_URL)
-            try:
-                self.conn.request('GET', url)
-                response = self.conn.getresponse()
-            except Exception as ex:
-                LOGGER.error('Retry attempt failed! {}'.format(ex))
-                self.api_close()
-                return None
-        if response.status == 200:
-            try:
-                data = json.loads(response.read().decode("utf-8"))
-            except Exception as ex:
-                LOGGER.error('Failed to json parse API response {} {}'.format(ex, response.read().decode("utf-8")))
-                self.api_close()
-                return None
-            return data
-        else:
-            LOGGER.error('Bad API response: {}, URL: {}'.format(response.status, url))
-            self.api_close()
-            return None
+        self.poly.updateProfile()
+        self.poly.setCustomParamsDoc()
 
     def api_close(self):
         if self.conn is not None:
@@ -106,19 +117,14 @@ class Controller(polyinterface.Controller):
         for node in self.nodes:
             self.nodes[node].reportDrivers()
 
-    def _start_time(self, site_tz):
-        # Returns site datetime - 60 minutes
-        st_time = datetime.utcnow().replace(tzinfo=pytz.utc) - timedelta(minutes=60)
-        return st_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
-
-    def _end_time(self, site_tz):
-        # Returns current site time
-        utc_time = datetime.utcnow().replace(tzinfo=pytz.utc)
-        return utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
-
+    '''
+       Multiple sites:   Each site
+         - multiple inverters
+         - mutiple batteries
+    '''
     def discover(self, command=None):
         LOGGER.info('Discovering SolarEdge sites and equipment...')
-        site_list = self.api_request('/sites/list?api_key='+self.api_key)
+        site_list = _api_request('/sites/list?api_key='+self.api_key)
         if site_list is None:
             return False
         num_sites = int(site_list['sites']['count'])
@@ -131,11 +137,11 @@ class Controller(polyinterface.Controller):
             site_tz = site['location']['timeZone']
             address = str(site['id'])
             LOGGER.info('Found {} site id: {}, name: {}, TZ: {}'.format(site['status'], address, name, site_tz))
-            if not address in self.nodes:
+            if self.poly.getNode(address) == None:
                 LOGGER.info('Adding site id: {}'.format(address))
-                self.addNode(SESite(self, address, address, name, site_tz))
+                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key))
             LOGGER.info('Requesting site inventory...')
-            site_inv =  self.api_request('/site/'+address+'/inventory?startTime='+self._start_time(site_tz)+'&endTime='+self._end_time(site_tz)+'&api_key='+self.api_key)
+            site_inv =  _api_request('/site/'+address+'/inventory?startTime='+_start_time(site_tz)+'&endTime='+_end_time(site_tz)+'&api_key='+self.api_key)
             if site_inv is None:
                 return False
             num_meter = len(site_inv['Inventory']['meters'])
@@ -152,50 +158,64 @@ class Controller(polyinterface.Controller):
                     inv_model = inverter['model'].split('-')[0]
                 else:
                     inv_model = inverter['model']
-                if not inv_addr in self.nodes:
+                if self.poly.getNode(inv_addr) == None:
                     LOGGER.info('Adding inverter {}'.format(inv_sn))
                     if inv_model in SINGLE_PHASE:
-                        self.addNode(SEInverter(self, address, inv_addr, inv_name, address, inv_sn, site_tz))
+                        self.poly.addNode(SEInverter(self.poly, address, inv_addr, inv_name, address, inv_sn, site_tz, self.api_key))
                     else:
                         LOGGER.error('Model {} is not yet supported'.format(inverter['model']))
             for battery in site_inv['Inventory']['batteries']:
                 batt_name = battery['name']
                 batt_sn = battery['SN']
                 batt_addr = battery['SN'].replace('-','').lower()[:14]
-                if not batt_addr in self.nodes:
+                if self.poly.getNode(batt_addr) == None:
                     LOGGER.info('Adding battery {}'.format(batt_sn))
-                    self.addNode(SEBattery(self, address, batt_addr, batt_name, address, batt_sn, site_tz, battery))
-                    self.batteries.append(batt_sn)
+                    self.poly.addNode(SEBattery(self.poly, address, batt_addr, batt_name, address, batt_sn, site_tz, battery))
+                    #self.batteries.append(batt_sn)
+                    self.poly.getNode(address).batteries.append(batt_sn)
 
     id = 'SECTRL'
     commands = {'DISCOVER': discover}
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
 
 
-class SESite(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, site_tz):
-        super().__init__(controller, primary, address, name)
+class SESite(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name, site_tz, key):
+        super().__init__(polyglot, primary, address, name)
         self.site_tz = site_tz
+        self.key = key
+        self.batteries = []
+
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.POLL, self.updateInfo)
 
     def start(self):
-        self.updateInfo(long_poll=True)
+        self.updateInfo(poll_flag='shortPoll')
 
-    def updateInfo(self, long_poll=False):
+    def updateInfo(self, poll_flag='longPoll'):
         try:
-            if not long_poll:
+            if poll_flag == 'shortPoll':
                 return True
-            url = '/site/'+self.address+'/powerDetails?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
-            power_data = self.controller.api_request(url)
 
-            if len(self.controller.batteries) > 0:
-                url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.controller.batteries))+'&startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
-                storage_data = self.controller.api_request(url)
+            url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+
+            power_data = _api_request(url)
+
+            '''
+               Is this getting all the battery info (all sites)? not just
+               the batteries for this site?
+            '''
+            if len(self.batteries) > 0:
+                url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.batteries))+'&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+
+                storage_data = _api_request(url)
+
                 LOGGER.debug(storage_data)
                 for battery in storage_data['storageData']['batteries']:
                     batt_sn = battery['serialNumber']
                     batt_addr = battery['serialNumber'].replace('-','').lower()[:14]
                     if battery['telemetryCount'] > 0:
-                        self.controller.nodes[batt_addr].updateData(battery['telemetries'])
+                        self.poly.getNode(batt_addr).updateData(battery['telemetries'])
                     else:
                         LOGGER.debug('no battery telemetries received')
 
@@ -269,23 +289,30 @@ class SESite(polyinterface.Node):
               ]
 
 
-class SEInverter(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, site_id, serial_num, site_tz):
-        super().__init__(controller, primary, address, name)
+class SEInverter(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name, site_id, serial_num, site_tz, key):
+        super().__init__(polyglot, primary, address, name)
         self.serial_num = serial_num
         self.site_id = site_id
         self.site_tz = site_tz
+        self.key = key
+
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.POLL, self.updateInfo)
 
     def start(self):
         self.updateInfo()
 
-    def updateInfo(self, long_poll=False):
-        if long_poll:
+    def updateInfo(self, poll_flag='shortPoll'):
+        if poll_flag == 'longPoll':
             return True
+
         try:
-            url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+self.controller._start_time(self.site_tz)+'&endTime='+self.controller._end_time(self.site_tz)+'&api_key='+self.controller.api_key
-            inverter_data = self.controller.api_request(url)
+            url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+            inverter_data = _api_request(url)
+
             LOGGER.debug(inverter_data)
+
             if inverter_data is None:
                 return False
             datapoints = int(inverter_data['data']['count'])
@@ -339,13 +366,15 @@ class SEInverter(polyinterface.Node):
             'QUERY': query
                }
 
-class SEBattery(polyinterface.Node):
-    def __init__(self, controller, primary, address, name, site_id, serial_num, site_tz, battery):
-        super().__init__(controller, primary, address, name)
+class SEBattery(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name, site_id, serial_num, site_tz, battery):
+        super().__init__(polyglot, primary, address, name)
         self.serial_num = serial_num
         self.site_id = site_id
         self.site_tz = site_tz
         self.battery = battery
+        self.poly.subscribe(self.poly.START, self.start, address)
+        #self.poly.subscribe(self.poly.POLL, self.updateData)
 
     def start(self):
         self.updateInfo()
@@ -382,9 +411,9 @@ class SEBattery(polyinterface.Node):
 
 if __name__ == "__main__":
     try:
-        polyglot = polyinterface.Interface('SolarEdge')
+        polyglot = udi_interface.Interface([])
         polyglot.start()
-        control = Controller(polyglot)
-        control.runForever()
+        Controller(polyglot, 'controller', 'controller', 'SolarEdge')
+        polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
         sys.exit(0)
