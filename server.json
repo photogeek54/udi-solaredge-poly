@@ -22,8 +22,8 @@
         }
     ],
 	"store": {
-		"developer": bpaauwe@bobsplace.com",
-		"purchaseOptions: [
+		"developer": "bpaauwe@bobsplace.com",
+		"purchaseOptions": [
 			{
 				"isPerpetual": true,
 				"price": 0
