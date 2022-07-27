@@ -101,8 +101,7 @@ class Controller(udi_interface.Node):
         self.api_close()
 
     def query(self, command=None):
-        for node in self.nodes:
-            self.nodes[node].reportDrivers()
+        self.reportDrivers()
 
     '''
        Multiple sites:   Each site
