@@ -100,19 +100,6 @@ class Controller(udi_interface.Node):
         LOGGER.info('SolarEdge is stopping')
         self.api_close()
 
-    def shortPoll(self):
-        for node in self.nodes:
-            self.nodes[node].updateInfo()
-        self.api_close()
-
-    def longPoll(self):
-        for node in self.nodes:
-            self.nodes[node].updateInfo(long_poll=True)
-        self.api_close()
-
-    def updateInfo(self, long_poll=False):
-        pass
-
     def query(self, command=None):
         for node in self.nodes:
             self.nodes[node].reportDrivers()
