@@ -781,7 +781,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.0")
+        polyglot.start("0.1.01")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
