@@ -19,6 +19,42 @@
             <st id="GV1" editor="WATT" />
             <st id="GV2" editor="WATT" />
             <st id="GV3" editor="WATT" />
+            <st id="GV4" editor="HOUR" />
+            <st id="GV5" editor="MINUTE" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="QUERY" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+    <nodeDef id="SEENERGY" nls="EN">
+        <editors />
+        <sts>
+            <st id="ST" editor="WH" />
+            <st id="GV0" editor="WH" />
+            <st id="GV1" editor="WH" />
+            <st id="GV2" editor="WH" />
+            <st id="GV3" editor="WH" />
+            <st id="GV4" editor="HOUR" />
+            <st id="GV5" editor="MINUTE" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="QUERY" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+    <nodeDef id="SEENERGYDAY" nls="DAY">
+        <editors />
+        <sts>
+            <st id="ST" editor="KWH" />
+            <st id="GV0" editor="KWH" />
+            <st id="GV1" editor="KWH" />
+            <st id="GV2" editor="KWH" />
+            <st id="GV3" editor="KWH" />
         </sts>
         <cmds>
             <sends />
@@ -53,6 +89,22 @@
             <st id="ST" editor="WATTCH" />
             <st id="BATLVL" editor="CHARGE" />
             <st id="GPV" editor="CAPACITY" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="QUERY" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+    <nodeDef id="SEOVERVIEW" nls="OV">
+        <editors />
+        <sts>
+            <st id="ST" editor="KWH" />
+            <st id="GV0" editor="KWH" />
+            <st id="GV1" editor="KWH" />
+            <st id="GV2" editor="KWH" />
+            <st id="GV3" editor="WATT" />
         </sts>
         <cmds>
             <sends />

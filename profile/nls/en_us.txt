@@ -5,13 +5,35 @@ CMD-CTRL-DISCOVER-NAME = Re-Discover
 ST-CTRL-ST-NAME = NodeServer Online
 
 # SolarEdge Site
-ND-SESITE-NAME = SolarEdge Site
+ND-SESITE-NAME = SolarEdge Site and Power
 ND-SESITE-ICON = EnergyMonitor
 ST-SITE-ST-NAME = Production
 ST-SITE-GV0-NAME = Consumption
 ST-SITE-GV1-NAME = Purchased
 ST-SITE-GV2-NAME = Self Consumption
 ST-SITE-GV3-NAME = Feed In
+ST-SITE-GV4-NAME = Hr ago Last 15min period
+ST-SITE-GV5-NAME = Min ago Last 15min period
+
+# SolarEdge Energy
+ND-SEENERGY-NAME = SolarEdge Energy Last 15min
+ND-SEENERGY-ICON = EnergyMonitor
+ST-EN-ST-NAME = Production
+ST-EN-GV0-NAME = Consumption
+ST-EN-GV1-NAME = Purchased
+ST-EN-GV2-NAME = Self Consumption
+ST-EN-GV3-NAME = Feed In
+ST-EN-GV4-NAME = Hr ago Last 15min period
+ST-EN-GV5-NAME = Min ago Last 15min period
+
+# SolarEdge Energy Today
+ND-SEENERGYDAY-NAME = SolarEdge Energy Today
+ND-SEENERGYDAY-ICON = EnergyMonitor
+ST-DAY-ST-NAME = Production
+ST-DAY-GV0-NAME = Consumption
+ST-DAY-GV1-NAME = Purchased
+ST-DAY-GV2-NAME = Self Consumption
+ST-DAY-GV3-NAME = Feed In
 
 # SolarEdge Inverter
 ND-SEINVERTER-NAME = SolarEdge Inverter
@@ -36,3 +58,12 @@ ST-BATT-GPV-NAME = Nameplate capacity
 MODE_SEL-0 = Unknown
 MODE_SEL-1 = Starting
 MODE_SEL-2 = MPPT
+
+# Solaredge Overview.
+ND-SEOVERVIEW-NAME = Solaredge Energy Overview
+ND-SEOVERVIEW-ICON = EnergyMonitor
+ST-OV-ST-NAME = Lifetime Energy
+ST-OV-GV0-NAME = YTD Energy
+ST-OV-GV1-NAME = MTD Energy
+ST-OV-GV2-NAME = Todays Energy
+ST-OV-GV3-NAME = Current Power

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+#import debugpy.......
 import udi_interface
 import sys
 import http.client
@@ -8,6 +9,8 @@ from datetime import datetime, timedelta
 import pytz
 import logging
 import json
+import math
+import time
 
 LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
@@ -16,16 +19,48 @@ SE_API_URL = 'monitoringapi.solaredge.com'
 SINGLE_PHASE = [ 'SE3000', 'SE3000A', 'SE3800', 'SE3800A', 'SE3800H', 'SE5000', 'SE6000', 'SE7600', 'SE7600A', 'SE10000', 'SE11400', 'SE5000H', 'SE7600H', 'SE10000H', 'SE10000A' ]
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
+delta = timedelta(minutes=15)
+
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
     st_time = datetime.utcnow().replace(tzinfo=pytz.utc) - timedelta(minutes=60)
     return st_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
-
+    
 def _end_time(site_tz):
     # Returns current site time
     utc_time = datetime.utcnow().replace(tzinfo=pytz.utc)
+    LOGGER.debug("_end_time " + utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S'))
     return utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
+
+today = datetime.utcnow().replace(tzinfo=pytz.utc)
+tomorrow = today + timedelta(hours=24)
+
+def _start_time_midnight(site_tz):
+    return today.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%200:0:0')
+
+def _end_time_midnight(site_tz):
+    return tomorrow.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%200:0:0')
+
+'''
+def floor_dt(dt, delta):
+    # find floor of time, ex 18:17:00-> 18:15:00)
+    return datetime.min + math.floor((dt - datetime.min) / delta) * delta
+
+def ceil_dt(dt, delta):
+     return dt + (datetime.min - dt) % delta
+
+def _energy_start_time(site_tz):
+    # Returns site datetime - 60 minutes
+    st_time = ceil_dt(datetime.now() - timedelta(minutes=60),delta)
+    return st_time.strftime('%Y-%m-%d%%20%H:%M:%S')
+
+def _energy_end_time(site_tz):
+    # Returns current site time
+    utc_time = ceil_dt(datetime.now(),delta)
+    LOGGER.debug("_energy_end_time " + utc_time.strftime('%Y-%m-%d%%20%H:%M:%S'))
+    return utc_time.strftime('%Y-%m-%d%%20%H:%M:%S')
+'''
 
 def _api_request(url):
     full = 'https://' + SE_API_URL + url
@@ -43,7 +78,7 @@ class Controller(udi_interface.Node):
     def __init__(self, polyglot, primary, address, name):
         super().__init__(polyglot, primary, address, name)
         self.poly = polyglot
-        self.name = 'SolarEdge Controller'
+        self.name = 'SolarEdge Energy'
         self.address = address
         self.primary = primary
         self.api_key = None
@@ -53,8 +88,24 @@ class Controller(udi_interface.Node):
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.CUSTOMPARAMS, self.handleParameters)
+        self.poly.subscribe(self.poly.ADDNODEDONE, self.node_queue)
         self.poly.ready()
         self.poly.addNode(self)
+        self.n_queue = []
+        
+    '''
+    node_queue() and wait_for_node_event() create a simple way to wait
+    for a node to be created.  The nodeAdd() API call is asynchronous and
+    will return before the node is fully created. Using this, we can wait
+    until it is fully created before we try to use it.
+    '''
+    def node_queue(self,data):
+      self.n_queue.append(data['address'])
+
+    def wait_for_node_event(self):
+      while len(self.n_queue) == 0:
+          time.sleep(0.1)
+      self.n_queue.pop()
 
     def handleParameters(self, params):
         validKey = False
@@ -126,6 +177,7 @@ class Controller(udi_interface.Node):
             if self.poly.getNode(address) == None:
                 LOGGER.info('Adding site id: {}'.format(address))
                 self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key))
+                self.wait_for_node_event()
             LOGGER.info('Requesting site inventory...')
             site_inv =  _api_request('/site/'+address+'/inventory?startTime='+_start_time(site_tz)+'&endTime='+_end_time(site_tz)+'&api_key='+self.api_key)
             if site_inv is None:
@@ -139,7 +191,7 @@ class Controller(udi_interface.Node):
             for inverter in site_inv['Inventory']['inverters']:
                 inv_name = inverter['name']
                 inv_sn = inverter['SN']
-                inv_addr = inverter['SN'].replace('-','').lower()[:14]
+                inv_addr = inverter['SN'].replace('-','').lower()[:14] # node names must be alphanumreric lower case
                 if '-' in inverter['model']:
                     inv_model = inverter['model'].split('-')[0]
                 else:
@@ -148,6 +200,7 @@ class Controller(udi_interface.Node):
                     LOGGER.info('Adding inverter {}'.format(inv_sn))
                     if inv_model in SINGLE_PHASE:
                         self.poly.addNode(SEInverter(self.poly, address, inv_addr, inv_name, address, inv_sn, site_tz, self.api_key))
+                        self.wait_for_node_event()
                     else:
                         LOGGER.error('Model {} is not yet supported'.format(inverter['model']))
             for battery in site_inv['Inventory']['batteries']:
@@ -157,8 +210,33 @@ class Controller(udi_interface.Node):
                 if self.poly.getNode(batt_addr) == None:
                     LOGGER.info('Adding battery {}'.format(batt_sn))
                     self.poly.addNode(SEBattery(self.poly, address, batt_addr, batt_name, address, batt_sn, site_tz, battery))
+                    self.wait_for_node_event()
                     #self.batteries.append(batt_sn)
                     self.poly.getNode(address).batteries.append(batt_sn)
+
+            # Adding Energy Node
+            en_name = "Energy Last 15min"
+            en_addr = "en"+address
+            if self.poly.getNode(en_addr) == None:
+                    LOGGER.info('Adding Energy')
+                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key))
+                    self.wait_for_node_event()
+
+            # Adding Daily Energy Node
+            en_name = "Energy Today"
+            en_addr = "dy"+address
+            if self.poly.getNode(en_addr) == None:
+                    LOGGER.info('Adding EnergyDay')
+                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key))
+                    self.wait_for_node_event()
+
+            # Adding overview node
+            ov_name = "Production Overview"
+            ov_addr = "ov"+address
+            if self.poly.getNode(ov_addr) == None:
+                    LOGGER.info('Adding Overview')
+                    self.poly.addNode(SEOverview(self.poly, address, ov_addr, ov_name, address, site_tz, self.api_key))
+                    self.wait_for_node_event()
 
     id = 'SECTRL'
     commands = {'DISCOVER': discover}
@@ -180,20 +258,23 @@ class SESite(udi_interface.Node):
 
     def updateInfo(self, poll_flag='longPoll'):
         try:
-            if poll_flag == 'shortPoll':
+            if poll_flag == 'longPoll':
                 return True
 
             url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
-
+            
+            LOGGER.debug ("power  " + url)
             power_data = _api_request(url)
-
+            
             '''
                Is this getting all the battery info (all sites)? not just
                the batteries for this site?
             '''
             if len(self.batteries) > 0:
+
                 url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.batteries))+'&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
 
+                
                 storage_data = _api_request(url)
 
                 LOGGER.debug(storage_data)
@@ -212,6 +293,8 @@ class SESite(udi_interface.Node):
                 self.setDriver('GV1', 0)
                 self.setDriver('GV2', 0)
                 self.setDriver('GV3', 0)
+                self.setDriver('GV4', 0)
+                self.setDriver('GV5', 0)
             else:
                 for meter in power_data['powerDetails']['meters']:
                     if meter['type'] == 'Production':
@@ -259,6 +342,23 @@ class SESite(udi_interface.Node):
                             self.setDriver('GV3', 0)
                         if 'value' in datapoint:
                             self.setDriver('GV3', float(datapoint['value']))
+        
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue  
+                    if len(datapoint) == 0:
+                        self.setDriver('GV4', 0)
+                        self.setDriver('GV5', 0)
+                    if 'date' in datapoint:
+                        last_date = datapoint['date']  
+                    if len(last_date) > 0:
+                        LOGGER.debug("last power date " + last_date)
+                        last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
+                        #LOGGER.debug("last power minute " + str(last_minute))
+                        self.setDriver('GV4', int(last_minute/60)) # hour
+                        self.setDriver('GV5',last_minute) #minute
+            
         except Exception as ex:
             LOGGER.error('SESite updateInfo failed! {}'.format(ex))
 
@@ -272,6 +372,224 @@ class SESite(udi_interface.Node):
                {'driver': 'GV1', 'value': 0, 'uom': 73},
                {'driver': 'GV2', 'value': 0, 'uom': 73},
                {'driver': 'GV3', 'value': 0, 'uom': 73},
+               {'driver': 'GV4', 'value': 0, 'uom': 19},
+               {'driver': 'GV5', 'value': 0, 'uom': 44}
+              ]
+
+class SEEnergy(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key):
+        super().__init__(polyglot, primary, address, name)
+        self.site_tz = site_tz
+        self.key = key
+        self.site_id = site_id
+        self.batteries = []
+
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.POLL, self.updateInfo)
+
+    def start(self):
+        self.updateInfo(poll_flag='shortPoll')
+
+    def updateInfo(self, poll_flag='longPoll'):
+        try:
+            if poll_flag == 'longPoll':
+                return True
+
+            url = '/site/'+self.site_id+'/energyDetails?timeUnit=QUARTER_OF_AN_HOUR&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+            
+            LOGGER.debug ("energy  " + url)
+            energy_data = _api_request(url)
+            
+            
+            
+            LOGGER.debug(energy_data)
+            if energy_data is None:
+                self.setDriver('ST', 0)
+                self.setDriver('GV0', 0)
+                self.setDriver('GV1', 0)
+                self.setDriver('GV2', 0)
+                self.setDriver('GV3', 0)
+                self.setDriver('GV4', 0)
+                self.setDriver('GV5', 0)
+                last_date = ""
+            else:
+                for meter in energy_data['energyDetails']['meters']:
+                    LOGGER.debug(meter)
+                    if meter['type'] == 'Production':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('ST', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('ST', float(datapoint['value']))
+                    elif meter['type'] == 'Consumption':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV0', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV0', float(datapoint['value']))
+                    elif meter['type'] == 'Purchased':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV1', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV1', float(datapoint['value']))
+                    elif meter['type'] == 'SelfConsumption':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV2', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV2', float(datapoint['value']))
+                    elif meter['type'] == 'FeedIn':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV3', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV3', float(datapoint['value']))
+
+                    try:
+                        datapoint = meter['values'][-1]
+                    except:
+                        continue  
+                    if len(datapoint) == 0:
+                        self.setDriver('GV4', 0)
+                        self.setDriver('GV5', 0)
+                    if 'date' in datapoint:
+                        last_date = datapoint['date']  
+                    if len(last_date) > 0:
+                        LOGGER.debug("last energy date " + last_date)
+                        last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
+                        #LOGGER.debug("last energy minute " + str(last_minute))
+                        self.setDriver('GV4', int(last_minute/60)) # hour
+                        self.setDriver('GV5',last_minute) #minute
+
+        except Exception as ex:
+            LOGGER.error('SEEnergy updateInfo failed! {}'.format(ex))
+
+    def query(self, command=None):
+        self.reportDrivers()
+
+    id = 'SEENERGY'
+    commands = {'QUERY': query}
+    drivers = [{'driver': 'ST', 'value': 0, 'uom': 119},
+               {'driver': 'GV0', 'value': 0, 'uom': 119},
+               {'driver': 'GV1', 'value': 0, 'uom': 119},
+               {'driver': 'GV2', 'value': 0, 'uom': 119},
+               {'driver': 'GV3', 'value': 0, 'uom': 119},
+               {'driver': 'GV4', 'value': 0, 'uom': 19},
+               {'driver': 'GV5', 'value': 0, 'uom': 44}
+              ]
+
+class SEEnergyDay(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key):
+        super().__init__(polyglot, primary, address, name)
+        self.site_tz = site_tz
+        self.key = key
+        self.site_id = site_id
+        self.batteries = []
+
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.POLL, self.updateInfo)
+
+    def start(self):
+        self.updateInfo(poll_flag='shortPoll')
+
+    def updateInfo(self, poll_flag='longPoll'):
+        try:
+            if poll_flag == 'longPoll':
+                return True
+
+            url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time_midnight(self.site_tz)+'&api_key='+self.key
+            
+            LOGGER.debug ("energy day  " + url)
+            energy_data = _api_request(url)
+            
+            
+            
+            LOGGER.debug(energy_data)
+            if energy_data is None:
+                self.setDriver('ST', 0)
+                self.setDriver('GV0', 0)
+                self.setDriver('GV1', 0)
+                self.setDriver('GV2', 0)
+                self.setDriver('GV3', 0)
+            else:
+                for meter in energy_data['energyDetails']['meters']:
+                    LOGGER.debug(meter)
+                    if meter['type'] == 'Production':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('ST', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('ST', round(float(datapoint['value'])/1000,1))
+                    elif meter['type'] == 'Consumption':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV0', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV0', round(float(datapoint['value'])/1000,1))
+                    elif meter['type'] == 'Purchased':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV1', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV1', round(float(datapoint['value'])/1000,1))
+                    elif meter['type'] == 'SelfConsumption':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV2', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV2', round(float(datapoint['value'])/1000,1))
+                    elif meter['type'] == 'FeedIn':
+                        try:
+                            datapoint = meter['values'][-2]
+                        except:
+                            continue
+                        if len(datapoint) == 0:
+                            self.setDriver('GV3', 0)
+                        if 'value' in datapoint:
+                            self.setDriver('GV3', round(float(datapoint['value'])/1000,1))
+
+                    
+        except Exception as ex:
+            LOGGER.error('SEEnergyDay updateInfo failed! {}'.format(ex))
+
+    def query(self, command=None):
+        self.reportDrivers()
+
+    id = 'SEENERGYDAY'
+    commands = {'QUERY': query}
+    drivers = [{'driver': 'ST', 'value': 0, 'uom': 33},
+               {'driver': 'GV0', 'value': 0, 'uom': 33},
+               {'driver': 'GV1', 'value': 0, 'uom': 33},
+               {'driver': 'GV2', 'value': 0, 'uom': 33},
+               {'driver': 'GV3', 'value': 0, 'uom': 33}
               ]
 
 
@@ -290,7 +608,7 @@ class SEInverter(udi_interface.Node):
         self.updateInfo()
 
     def updateInfo(self, poll_flag='shortPoll'):
-        if poll_flag == 'longPoll':
+        if poll_flag == 'shortPoll':
             return True
 
         try:
@@ -395,10 +713,75 @@ class SEBattery(udi_interface.Node):
                }
 
 
+class SEOverview(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key):
+        super().__init__(polyglot, primary, address, name)
+        self.site_id = site_id
+        self.site_tz = site_tz
+        self.key = key
+
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.POLL, self.updateInfo)
+
+    def start(self):
+        self.updateInfo()
+
+
+    def updateInfo(self, poll_flag='longPoll'):
+        if poll_flag == 'longPoll':
+            return True
+
+        try:
+            url = '/site/'+self.site_id+'/overview/'+'?api_key='+self.key
+            LOGGER.debug("overview url = " + url)
+            overview_data = _api_request(url)
+
+            LOGGER.debug(overview_data)
+
+            if overview_data is None:
+                return False
+            data = overview_data['overview']
+            LOGGER.debug("Overview Data " + str(data['currentPower']['power']))
+            self.setDriver('ST', round(data['lifeTimeData']['energy'] / 1000,1))
+            self.setDriver('GV0', round(data['lastYearData']['energy'] / 1000,1))
+            self.setDriver('GV1', round(data['lastMonthData']['energy'] / 1000,1))
+            self.setDriver('GV2', round(data['lastDayData']['energy'] / 1000,1))
+            self.setDriver('GV3', data['currentPower']['power'])
+        except Exception as ex:
+            LOGGER.error('SEOverview updateInfo failed! {}'.format(ex))
+
+    def query(self, command=None):
+        self.reportDrivers()
+
+    drivers = [{'driver': 'ST', 'value': 0, 'uom': 33},
+               {'driver': 'GV0', 'value': 0, 'uom': 33},
+               {'driver': 'GV1', 'value': 0, 'uom': 33},
+               {'driver': 'GV2', 'value': 0, 'uom': 33},
+               {'driver': 'GV3', 'value': 0, 'uom': 73}
+              ]
+    id = 'SEOVERVIEW'
+    commands = {
+            'QUERY': query
+               }
+
+
+
+
+
 if __name__ == "__main__":
     try:
+        # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+        '''
+        debugpy.listen(5678)
+        print("Waiting for debugger attach")
+        debugpy.wait_for_client()
+        debugpy.breakpoint()
+        logger.debug("break on this line")
+        print('break on this line')
+        '''
+
         polyglot = udi_interface.Interface([])
-        polyglot.start("1.0.2")
+        polyglot.start("0.2.3")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):

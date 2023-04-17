@@ -35,4 +35,16 @@
     <editor id="CAPACITY">
         <range uom="56" min="0" max="50000" prec="1" />
     </editor>
+    <editor id="HOUR">
+        <range uom="19" min="0" max="24" prec="0" />
+    </editor>
+    <editor id="MINUTE">
+        <range uom="44" min="0" max="6000" prec="1" />
+    </editor>
+    <editor id="KWH">
+        <range uom="33" min="0" max="99999999" prec="1" />
+    </editor>
+     <editor id="WH">
+        <range uom="119" min="0" max="99999999" prec="1" />
+    </editor>
 </editors>

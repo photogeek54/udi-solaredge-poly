@@ -6,8 +6,8 @@
     "install": "install.sh",
     "description": "Solar Edge Cloud Integration",
     "notice": "",
-    "shortPoll": "600",
-    "longPoll": "1200",
+    "shortPoll": "900",
+    "longPoll": "1800",
 	"customParams": {
 		"api_key": ""
 	},
