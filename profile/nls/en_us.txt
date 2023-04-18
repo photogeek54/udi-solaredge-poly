@@ -66,4 +66,4 @@ ST-OV-ST-NAME = Lifetime Energy
 ST-OV-GV0-NAME = YTD Energy
 ST-OV-GV1-NAME = MTD Energy
 ST-OV-GV2-NAME = Todays Energy
-ST-OV-GV3-NAME = Current Power
+ST-OV-GV3-NAME = Current Production
