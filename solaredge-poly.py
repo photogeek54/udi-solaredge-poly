@@ -80,7 +80,7 @@ class Controller(udi_interface.Node):
     def __init__(self, polyglot, primary, address, name):
         super().__init__(polyglot, primary, address, name)
         self.poly = polyglot
-        self.name = 'SolarEdge Energy'
+        self.name = 'SolarEdge Extended Controller'
         self.address = address
         self.primary = primary
         self.api_key = None
@@ -625,7 +625,7 @@ class SEInverter(udi_interface.Node):
         self.updateInfo()
 
     def updateInfo(self, poll_flag='shortPoll'):
-        if poll_flag == 'shortPoll':
+        if poll_flag == 'longPoll':
             return True
 
         try:
