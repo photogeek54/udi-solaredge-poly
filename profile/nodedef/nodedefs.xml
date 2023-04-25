@@ -19,8 +19,7 @@
             <st id="GV1" editor="WATT" />
             <st id="GV2" editor="WATT" />
             <st id="GV3" editor="WATT" />
-            <st id="GV4" editor="HOUR" />
-            <st id="GV5" editor="MINUTE" />
+            <st id="GV4" editor="MINUTE" />
         </sts>
         <cmds>
             <sends />

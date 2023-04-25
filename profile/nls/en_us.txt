@@ -13,7 +13,6 @@ ST-SITE-GV1-NAME = Purchased
 ST-SITE-GV2-NAME = Self Consumption
 ST-SITE-GV3-NAME = Feed In
 ST-SITE-GV4-NAME = Since Last Update
-ST-SITE-GV5-NAME = Since Last Update
 
 # SolarEdge Energy
 ND-SEENERGY-NAME = SolarEdge Energy Last 15min

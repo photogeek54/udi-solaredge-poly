@@ -20,7 +20,8 @@ SINGLE_PHASE = [ 'SE3000', 'SE3000A', 'SE3800', 'SE3800A', 'SE3800H', 'SE5000', 
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
 delta = timedelta(minutes=15)
-
+last_production = 0
+last_consumption = 0
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
@@ -259,8 +260,9 @@ class SESite(udi_interface.Node):
     def updateInfo(self, poll_flag='longPoll'):
         try:
             if poll_flag == 'longPoll':
-                return True
+                return True #updates every shortpoll
 
+            datapoint_changed = 0
             url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
             
             LOGGER.debug ("power  " + url)
@@ -294,7 +296,6 @@ class SESite(udi_interface.Node):
                 self.setDriver('GV2', 0)
                 self.setDriver('GV3', 0)
                 self.setDriver('GV4', 0)
-                self.setDriver('GV5', 0)
             else:
                 for meter in power_data['powerDetails']['meters']:
                     if meter['type'] == 'Production':
@@ -305,6 +306,9 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('ST', 0)
                         if 'value' in datapoint:
+                            if datapoint['value'] != last_production:
+                                datapoint_changed = 1
+                                last_production = datapoint['value'] 
                             self.setDriver('ST', float(datapoint['value']))
                     elif meter['type'] == 'Consumption':
                         try:
@@ -314,6 +318,9 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('GV0', 0)
                         if 'value' in datapoint:
+                            if datapoint['value'] != last_consumption:
+                                datapoint_changed = 1
+                                last_consumption = datapoint['value']
                             self.setDriver('GV0', float(datapoint['value']))
                     elif meter['type'] == 'Purchased':
                         try:
@@ -343,6 +350,7 @@ class SESite(udi_interface.Node):
                         if 'value' in datapoint:
                             self.setDriver('GV3', float(datapoint['value']))
         
+                    '''
                     try:
                         datapoint = meter['values'][-1]
                     except:
@@ -359,7 +367,15 @@ class SESite(udi_interface.Node):
                         minutes = last_minute.math.fmod(last_minute,60)
                         self.setDriver('GV4', int(last_minute/60)) # hour
                         self.setDriver('GV5',minutes) #minute
-                        
+                    '''
+                    if datapoint_changed == 1:
+                        last_date = datetime.now()
+                        LOGGER.debug("last power date " + last_date)
+                    last_minute = round(((datetime.now() - last_date) / timedelta(seconds=60)),1)
+                    LOGGER.debug("last power minute " + str(last_minute))
+                    minutes = last_minute.math.fmod(last_minute,60)
+                    self.setDriver('GV4',minutes) #minute    
+                            
         except Exception as ex:
             LOGGER.error('SESite updateInfo failed! {}'.format(ex))
 
@@ -373,8 +389,7 @@ class SESite(udi_interface.Node):
                {'driver': 'GV1', 'value': 0, 'uom': 73},
                {'driver': 'GV2', 'value': 0, 'uom': 73},
                {'driver': 'GV3', 'value': 0, 'uom': 73},
-               {'driver': 'GV4', 'value': 0, 'uom': 19},
-               {'driver': 'GV5', 'value': 0, 'uom': 44}
+               {'driver': 'GV4', 'value': 0, 'uom': 44}
               ]
 
 class SEEnergy(udi_interface.Node):
@@ -411,7 +426,6 @@ class SEEnergy(udi_interface.Node):
                 self.setDriver('GV2', 0)
                 self.setDriver('GV3', 0)
                 self.setDriver('GV4', 0)
-                self.setDriver('GV5', 0)
                 last_date = ""
             else:
                 for meter in energy_data['energyDetails']['meters']:
@@ -468,7 +482,6 @@ class SEEnergy(udi_interface.Node):
                         continue  
                     if len(datapoint) == 0:
                         self.setDriver('GV4', 0)
-                        self.setDriver('GV5', 0)
                     if 'date' in datapoint:
                         last_date = datapoint['date']  
                     if len(last_date) > 0:
@@ -476,8 +489,7 @@ class SEEnergy(udi_interface.Node):
                         last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
                         #LOGGER.debug("last energy minute " + str(last_minute))
                         minutes = last_minute.math.fmod(last_minute,60)
-                        self.setDriver('GV4', int(last_minute/60)) # hour
-                        self.setDriver('GV5',minutes) #minute
+                        self.setDriver('GV4',minutes) #minute
 
         except Exception as ex:
             LOGGER.error('SEEnergy updateInfo failed! {}'.format(ex))
@@ -492,8 +504,7 @@ class SEEnergy(udi_interface.Node):
                {'driver': 'GV1', 'value': 0, 'uom': 119},
                {'driver': 'GV2', 'value': 0, 'uom': 119},
                {'driver': 'GV3', 'value': 0, 'uom': 119},
-               {'driver': 'GV4', 'value': 0, 'uom': 19},
-               {'driver': 'GV5', 'value': 0, 'uom': 44}
+               {'driver': 'GV4', 'value': 0, 'uom': 44}
               ]
 
 class SEEnergyDay(udi_interface.Node):
@@ -783,7 +794,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.02")
+        polyglot.start("0.1.03")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
