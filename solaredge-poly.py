@@ -310,9 +310,9 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('ST', 0)
                         if 'value' in datapoint:
-                            if datapoint['value'] != self.last_production:
+                            if float(datapoint['value']) != self.last_production:
                                 datapoint_changed = 1
-                                self.last_production = datapoint['value'] 
+                                self.last_production = float(datapoint['value']) 
                                 LOGGER.debug("self.last_production " + str(self.last_production))
                             self.setDriver('ST', float(datapoint['value']))
                     elif meter['type'] == 'Consumption':
@@ -323,9 +323,9 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('GV0', 0)
                         if 'value' in datapoint:
-                            if datapoint['value'] != self.last_consumption:
+                            if float(datapoint['value']) != self.last_consumption:
                                 datapoint_changed = 1
-                                self.last_consumption = datapoint['value']
+                                self.last_consumption = float(datapoint['value'])
                                 LOGGER.debug("self.last_consumption " + str(self.last_consumption))
                             self.setDriver('GV0', float(datapoint['value']))
                     elif meter['type'] == 'Purchased':
@@ -803,7 +803,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.07")
+        polyglot.start("0.1.08")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
