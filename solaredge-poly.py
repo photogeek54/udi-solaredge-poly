@@ -378,12 +378,8 @@ class SESite(udi_interface.Node):
                         self.last_date = datetime.now()
                         LOGGER.debug("last power date " + str(self.last_date))
                     last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-                    LOGGER.debug("last power minute " + str(last_minute))
-                    if last_minute != 0:
-                        minutes = last_minute.math.fmod(last_minute,60)
-                    else:
-                        minutes = 0
-                    self.setDriver('GV4',minutes) #minute    
+                    LOGGER.debug("power last minute " + str(last_minute))
+                    self.setDriver('GV4',last_minute) #minute    
                             
         except Exception as ex:
             LOGGER.error('SESite updateInfo failed! {}'.format(ex))
@@ -496,9 +492,8 @@ class SEEnergy(udi_interface.Node):
                     if len(last_date) > 0:
                         LOGGER.debug("last energy date " + last_date)
                         last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                        #LOGGER.debug("last energy minute " + str(last_minute))
-                        minutes = last_minute.math.fmod(last_minute,60)
-                        self.setDriver('GV4',minutes) #minute
+                        LOGGER.debug("energy last minute " + str(last_minute))
+                        self.setDriver('GV4',last_minute) #minute
 
         except Exception as ex:
             LOGGER.error('SEEnergy updateInfo failed! {}'.format(ex))
@@ -803,7 +798,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.08")
+        polyglot.start("0.1.09)
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
