@@ -178,7 +178,7 @@ class Controller(udi_interface.Node):
             LOGGER.info('Found {} site id: {}, name: {}, TZ: {}'.format(site['status'], address, name, site_tz))
             if self.poly.getNode(address) == None:
                 LOGGER.info('Adding site id: {}'.format(address))
-                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key, last_production, last_consumption))
+                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key, last_production, last_consumption, last_date))
                 self.wait_for_node_event()
             LOGGER.info('Requesting site inventory...')
             site_inv =  _api_request('/site/'+address+'/inventory?startTime='+_start_time(site_tz)+'&endTime='+_end_time(site_tz)+'&api_key='+self.api_key)
