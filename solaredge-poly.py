@@ -20,8 +20,8 @@ SINGLE_PHASE = [ 'SE3000', 'SE3000A', 'SE3800', 'SE3800A', 'SE3800H', 'SE5000', 
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
 delta = timedelta(minutes=15)
-last_production = 0
-last_consumption = 0
+last_production = -1.0
+last_consumption = -1.0
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
@@ -245,13 +245,13 @@ class Controller(udi_interface.Node):
 
 
 class SESite(udi_interface.Node):
-    def __init__(self, polyglot, primary, address, name, site_tz, key, last_p, last_c):
+    def __init__(self, polyglot, primary, address, name, site_tz, key, last_production, last_consumption):
         super().__init__(polyglot, primary, address, name)
         self.site_tz = site_tz
         self.key = key
         self.batteries = []
-        self.last_production = last_p
-        self.last_consumption = last_c
+        self.last_production = last_production
+        self.last_consumption = last_consumption
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -799,7 +799,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.05")
+        polyglot.start("0.1.06")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
