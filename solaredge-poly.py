@@ -262,7 +262,7 @@ class SESite(udi_interface.Node):
             if poll_flag == 'longPoll':
                 return True #updates every shortpoll
 
-            datapoint_changed = 0
+            datapoint_changed = 1
             url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
             
             LOGGER.debug ("power  " + url)
@@ -370,10 +370,13 @@ class SESite(udi_interface.Node):
                     '''
                     if datapoint_changed == 1:
                         last_date = datetime.now()
-                        LOGGER.debug("last power date " + last_date)
+                        LOGGER.debug("last power date " + str(last_date))
                     last_minute = round(((datetime.now() - last_date) / timedelta(seconds=60)),1)
                     LOGGER.debug("last power minute " + str(last_minute))
-                    minutes = last_minute.math.fmod(last_minute,60)
+                    if last_minute != 0:
+                        minutes = last_minute.math.fmod(last_minute,60)
+                    else:
+                        minutes = 0
                     self.setDriver('GV4',minutes) #minute    
                             
         except Exception as ex:
@@ -794,7 +797,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.03")
+        polyglot.start("0.1.04")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
