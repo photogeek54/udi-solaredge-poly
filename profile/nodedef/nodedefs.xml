@@ -36,8 +36,7 @@
             <st id="GV1" editor="WH" />
             <st id="GV2" editor="WH" />
             <st id="GV3" editor="WH" />
-            <st id="GV4" editor="HOUR" />
-            <st id="GV5" editor="MINUTE" />
+            <st id="GV4" editor="MINUTE" />
         </sts>
         <cmds>
             <sends />

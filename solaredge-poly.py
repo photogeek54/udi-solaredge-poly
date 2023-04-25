@@ -22,6 +22,7 @@ THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 delta = timedelta(minutes=15)
 last_production = -1.0
 last_consumption = -1.0
+last_date = datetime.now()
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
@@ -245,13 +246,14 @@ class Controller(udi_interface.Node):
 
 
 class SESite(udi_interface.Node):
-    def __init__(self, polyglot, primary, address, name, site_tz, key, last_production, last_consumption):
+    def __init__(self, polyglot, primary, address, name, site_tz, key, last_production, last_consumption, last_date):
         super().__init__(polyglot, primary, address, name)
         self.site_tz = site_tz
         self.key = key
         self.batteries = []
         self.last_production = last_production
         self.last_consumption = last_consumption
+        self.last_date = last_date
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -371,9 +373,9 @@ class SESite(udi_interface.Node):
                         self.setDriver('GV5',minutes) #minute
                     '''
                     if datapoint_changed == 1:
-                        last_date = datetime.now()
-                        LOGGER.debug("last power date " + str(last_date))
-                    last_minute = round(((datetime.now() - last_date) / timedelta(seconds=60)),1)
+                        self.last_date = datetime.now()
+                        LOGGER.debug("last power date " + str(self.last_date))
+                    last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
                     LOGGER.debug("last power minute " + str(last_minute))
                     if last_minute != 0:
                         minutes = last_minute.math.fmod(last_minute,60)

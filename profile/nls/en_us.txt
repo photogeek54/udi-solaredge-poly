@@ -23,7 +23,6 @@ ST-EN-GV1-NAME = Purchased
 ST-EN-GV2-NAME = Self Consumption
 ST-EN-GV3-NAME = Feed In
 ST-EN-GV4-NAME = Since Last Update
-ST-EN-GV5-NAME = Since Last Update
 
 # SolarEdge Energy Today
 ND-SEENERGYDAY-NAME = SolarEdge Energy Today
