@@ -15,7 +15,7 @@ Nodes should now be created on the ISY that represent your site configuration.
 
 #### Short Poll
  *  How often to poll the SolarEdge servers for inverter/battery/power/energy info. Default
- is 900 seconds (15 minutes)
+ is 300 seconds (5 minutes)
 
 #### Long Poll
  * How often to poll for Overview Energy Default is 1800 seconds (30 minutes)
