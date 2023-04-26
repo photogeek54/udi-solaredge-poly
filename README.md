@@ -28,5 +28,5 @@ Nodes should now be created on the ISY that represent your site configuration.
 Please report any problems on the UDI user forum.
 
 This solaredge version is based on xKing and bpwwer's version. Added are an Energy Node which uses the most recent 15min period to show energy (KWh). Since these readings will always be 15 minutes you can get a more accurate average power (KW) for that period by multiplying the energy figure by 4.
-Note that the API only updates values every 15 minutes so the added "min ago" field shows how long ago the reading was taken. The EnergyDay node shows todays energy. The Overview node shows the Energy history. It is updated during the long poll interval as most of the fields change very slowly.
+Note that the API only updates values every 5 minutes so the added "since last update" field shows how long ago the power reading was taken. The EnergyDay node shows todays energy. The Overview node shows the Energy history. It is updated during the long poll interval as most of the fields change very slowly.
 
