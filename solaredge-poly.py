@@ -310,11 +310,11 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('ST', 0)
                         if 'value' in datapoint:
-                            if float(datapoint['value']) != self.last_production:
+                            if round(float(datapoint['value']),3) != self.last_production:
                                 datapoint_changed = 1
-                                self.last_production = float(datapoint['value']) 
+                                self.last_production = round(float(datapoint['value']),3) 
                                 LOGGER.debug("self.last_production " + str(self.last_production))
-                            self.setDriver('ST', float(datapoint['value']))
+                            self.setDriver('ST', round(float(datapoint['value']),3))
                     elif meter['type'] == 'Consumption':
                         try:
                             datapoint = meter['values'][-1]
@@ -323,11 +323,11 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('GV0', 0)
                         if 'value' in datapoint:
-                            if float(datapoint['value']) != self.last_consumption:
+                            if round(float(datapoint['value']),3) != self.last_consumption:
                                 datapoint_changed = 1
-                                self.last_consumption = float(datapoint['value'])
+                                self.last_consumption = round(float(datapoint['value']),3)
                                 LOGGER.debug("self.last_consumption " + str(self.last_consumption))
-                            self.setDriver('GV0', float(datapoint['value']))
+                            self.setDriver('GV0', round(float(datapoint['value']),3))
                     elif meter['type'] == 'Purchased':
                         try:
                             datapoint = meter['values'][-1]
@@ -336,7 +336,7 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('GV1', 0)
                         if 'value' in datapoint:
-                            self.setDriver('GV1', float(datapoint['value']))
+                            self.setDriver('GV1', round(float(datapoint['value']),3))
                     elif meter['type'] == 'SelfConsumption':
                         try:
                             datapoint = meter['values'][-1]
@@ -345,7 +345,7 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('GV2', 0)
                         if 'value' in datapoint:
-                            self.setDriver('GV2', float(datapoint['value']))
+                            self.setDriver('GV2', round(float(datapoint['value']),3))
                     elif meter['type'] == 'FeedIn':
                         try:
                             datapoint = meter['values'][-1]
@@ -354,7 +354,7 @@ class SESite(udi_interface.Node):
                         if len(datapoint) == 0:
                             self.setDriver('GV3', 0)
                         if 'value' in datapoint:
-                            self.setDriver('GV3', float(datapoint['value']))
+                            self.setDriver('GV3', round(float(datapoint['value']),3))
         
                     '''
                     try:
@@ -798,7 +798,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.1.10")
+        polyglot.start("0.2.0")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
