@@ -645,19 +645,19 @@ class SEInverter(udi_interface.Node):
             if not 'L1Data' in data:
                 LOGGER.error('Is this a single phase inverter? {}'.format(self.serial_num))
                 return False
-            self.setDriver('ST', float(data['L1Data']['activePower']))
+            self.setDriver('ST', round(float(data['L1Data']['activePower']),3))
             if 'reactivePower' in data['L1Data']:
-                self.setDriver('GV0', float(data['L1Data']['reactivePower']))
+                self.setDriver('GV0', round(float(data['L1Data']['reactivePower']),3))
             else:
                 self.setDriver('GV0', 0)
             if 'apparentPower' in data['L1Data']:
-                self.setDriver('CPW', float(data['L1Data']['apparentPower']))
+                self.setDriver('CPW', round(float(data['L1Data']['apparentPower']),3))
             else:
                 self.setDriver('CPW', 0)
-            self.setDriver('CLITEMP', float(data['temperature']))
-            self.setDriver('CV', float(data['L1Data']['acVoltage']))
+            self.setDriver('CLITEMP', round(float(data['temperature']),3))
+            self.setDriver('CV', round(float(data['L1Data']['acVoltage']),3))
             if data['dcVoltage'] is not None:
-                self.setDriver('GV1', float(data['dcVoltage']))
+                self.setDriver('GV1', round(float(data['dcVoltage']),3))
             self.setDriver('GV2', round(float(data['L1Data']['acCurrent']), 1))
             self.setDriver('GV3', round(float(data['L1Data']['acFrequency']), 1))
             if data['inverterMode'] == 'MPPT':
@@ -798,7 +798,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.2.0")
+        polyglot.start("0.2.01")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
