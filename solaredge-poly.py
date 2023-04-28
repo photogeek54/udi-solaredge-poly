@@ -35,13 +35,14 @@ def _end_time(site_tz):
     LOGGER.debug("_end_time " + utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S'))
     return utc_time.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%20%H:%M:%S')
 
-today = datetime.utcnow().replace(tzinfo=pytz.utc)
-tomorrow = today + timedelta(hours=24)
 
 def _start_time_midnight(site_tz):
+    today = datetime.utcnow().replace(tzinfo=pytz.utc)    
     return today.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%200:0:0')
 
 def _end_time_midnight(site_tz):
+    today = datetime.utcnow().replace(tzinfo=pytz.utc)  
+    tomorrow = today + timedelta(hours=24)
     return tomorrow.astimezone(pytz.timezone(site_tz)).strftime('%Y-%m-%d%%200:0:0')
 
 '''
@@ -798,7 +799,7 @@ if __name__ == "__main__":
         '''
 
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.2.02")
+        polyglot.start("0.2.05")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
