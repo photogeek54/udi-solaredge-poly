@@ -357,24 +357,7 @@ class SESite(udi_interface.Node):
                         if 'value' in datapoint:
                             self.setDriver('GV3', round(float(datapoint['value']),3))
         
-                    '''
-                    try:
-                        datapoint = meter['values'][-1]
-                    except:
-                        continue  
-                    if len(datapoint) == 0:
-                        self.setDriver('GV4', 0)
-                        self.setDriver('GV5', 0)
-                    if 'date' in datapoint:
-                        last_date = datapoint['date']  
-                    if len(last_date) > 0:
-                        LOGGER.debug("last power date " + last_date)
-                        last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                        #LOGGER.debug("last power minute " + str(last_minute))
-                        minutes = last_minute.math.fmod(last_minute,60)
-                        self.setDriver('GV4', int(last_minute/60)) # hour
-                        self.setDriver('GV5',minutes) #minute
-                    '''
+                    
                     if datapoint_changed == 1:
                         self.last_date = datetime.now()
                         LOGGER.debug("last power date " + str(self.last_date))
@@ -788,18 +771,9 @@ class SEOverview(udi_interface.Node):
 
 if __name__ == "__main__":
     try:
-        # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-        '''
-        debugpy.listen(5678)
-        print("Waiting for debugger attach")
-        debugpy.wait_for_client()
-        debugpy.breakpoint()
-        logger.debug("break on this line")
-        print('break on this line')
-        '''
-
+       
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.2.05")
+        polyglot.start("0.2.06")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
