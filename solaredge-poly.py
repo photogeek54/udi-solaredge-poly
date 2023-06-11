@@ -279,7 +279,7 @@ class SESite(udi_interface.Node):
             datapoint_changed = 0
             url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
             
-            LOGGER.debug ("power  " + url)
+            LOGGER.info ("power  " + url)
             power_data = _api_request(url)
             
             '''
@@ -369,9 +369,9 @@ class SESite(udi_interface.Node):
                     
                     if datapoint_changed == 1:
                         self.last_date = datetime.now()
-                        LOGGER.debug("last power date " + str(self.last_date))
+                        LOGGER.info("last power date " + str(self.last_date))
                     last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-                    LOGGER.debug("power last minute " + str(last_minute))
+                    LOGGER.info("power last minute " + str(last_minute))
                     self.setDriver('GV4',last_minute) #minute    
                             
         except Exception as ex:
@@ -427,7 +427,7 @@ class SEEnergy(udi_interface.Node):
                 last_date = ""
             else:
                 for meter in energy_data['energyDetails']['meters']:
-                    LOGGER.debug(meter)
+                    LOGGER.info(meter)
                     if meter['type'] == 'Production':
                         try:
                             datapoint = meter['values'][-2]
@@ -782,7 +782,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.01")
+        polyglot.start("0.3.02")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
