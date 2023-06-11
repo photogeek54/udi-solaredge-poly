@@ -208,7 +208,7 @@ class Controller(udi_interface.Node):
                 if self.poly.getNode(inv_addr) == None:
                     LOGGER.info('Adding inverter {}'.format(inv_sn))
                     if inv_model in SINGLE_PHASE:
-                        self.poly.addNode(SEInverter(self.poly, address, inv_addr, inv_name, address, inv_sn, site_tz, self.api_key))
+                        self.poly.addNode(SEInverter(self.poly, address, inv_addr, inv_name, address, inv_sn, site_tz, self.api_key, last_date, self.rate_limit))
                         self.wait_for_node_event()
                     else:
                         LOGGER.error('Model {} is not yet supported'.format(inverter['model']))
@@ -244,7 +244,7 @@ class Controller(udi_interface.Node):
             ov_addr = "ov"+address
             if self.poly.getNode(ov_addr) == None:
                     LOGGER.info('Adding Overview')
-                    self.poly.addNode(SEOverview(self.poly, address, ov_addr, ov_name, address, site_tz, self.api_key))
+                    self.poly.addNode(SEOverview(self.poly, address, ov_addr, ov_name, address, site_tz, self.api_key, last_date, self.rate_limit))
                     self.wait_for_node_event()
 
     id = 'SECTRL'
@@ -612,7 +612,7 @@ class SEEnergyDay(udi_interface.Node):
                             if 'value' in datapoint:
                                 self.setDriver('GV3', round(float(datapoint['value'])/1000,1))
             
-                        self.last_date = datetime.now()
+                self.last_date = datetime.now()
                     
         except Exception as ex:
             LOGGER.error('SEEnergyDay updateInfo failed! {}'.format(ex))
@@ -631,12 +631,14 @@ class SEEnergyDay(udi_interface.Node):
 
 
 class SEInverter(udi_interface.Node):
-    def __init__(self, polyglot, primary, address, name, site_id, serial_num, site_tz, key):
+    def __init__(self, polyglot, primary, address, name, site_id, serial_num, site_tz, key, last_date, rate_limit):
         super().__init__(polyglot, primary, address, name)
         self.serial_num = serial_num
         self.site_id = site_id
         self.site_tz = site_tz
         self.key = key
+        self.last_date = last_date
+        self.rate_limit = rate_limit
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -645,47 +647,58 @@ class SEInverter(udi_interface.Node):
         self.updateInfo()
 
     def updateInfo(self, poll_flag='shortPoll'):
-        if poll_flag == 'longPoll':
-            return True
-
         try:
-            url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
-            inverter_data = _api_request(url)
+            
+            if poll_flag == 'longPoll':
+                return True
 
-            LOGGER.debug(inverter_data)
+            last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
+            LOGGER.info('initial inverter rate_limit ' + str(self.rate))
+            LOGGER.info('initial inverter last_minute ' + str(last_minute))
+                
+            if last_minute >= self.rate:
 
-            if inverter_data is None:
-                return False
-            datapoints = int(inverter_data['data']['count'])
-            if datapoints < 1:
-                LOGGER.warning('No Inverter data received, skipping...')
-                return False
-            # Take latest data point
-            data = inverter_data['data']['telemetries'][-1]
-            if not 'L1Data' in data:
-                LOGGER.error('Is this a single phase inverter? {}'.format(self.serial_num))
-                return False
-            self.setDriver('ST', round(float(data['L1Data']['activePower']),3))
-            if 'reactivePower' in data['L1Data']:
-                self.setDriver('GV0', round(float(data['L1Data']['reactivePower']),3))
-            else:
-                self.setDriver('GV0', 0)
-            if 'apparentPower' in data['L1Data']:
-                self.setDriver('CPW', round(float(data['L1Data']['apparentPower']),3))
-            else:
-                self.setDriver('CPW', 0)
-            self.setDriver('CLITEMP', round(float(data['temperature']),3))
-            self.setDriver('CV', round(float(data['L1Data']['acVoltage']),3))
-            if data['dcVoltage'] is not None:
-                self.setDriver('GV1', round(float(data['dcVoltage']),3))
-            self.setDriver('GV2', round(float(data['L1Data']['acCurrent']), 1))
-            self.setDriver('GV3', round(float(data['L1Data']['acFrequency']), 1))
-            if data['inverterMode'] == 'MPPT':
-                self.setDriver('GV4', 2)
-            elif data['inverterMode'] == 'STARTING':
-                self.setDriver('GV4', 1)
-            else:
-                self.setDriver('GV4', 0)
+                url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+                inverter_data = _api_request(url)
+
+                LOGGER.debug(inverter_data)
+
+                if inverter_data is None:
+                    return False
+                datapoints = int(inverter_data['data']['count'])
+                if datapoints < 1:
+                    LOGGER.warning('No Inverter data received, skipping...')
+                    return False
+                # Take latest data point
+                data = inverter_data['data']['telemetries'][-1]
+                if not 'L1Data' in data:
+                    LOGGER.error('Is this a single phase inverter? {}'.format(self.serial_num))
+                    return False
+                self.setDriver('ST', round(float(data['L1Data']['activePower']),3))
+                if 'reactivePower' in data['L1Data']:
+                    self.setDriver('GV0', round(float(data['L1Data']['reactivePower']),3))
+                else:
+                    self.setDriver('GV0', 0)
+                if 'apparentPower' in data['L1Data']:
+                    self.setDriver('CPW', round(float(data['L1Data']['apparentPower']),3))
+                else:
+                    self.setDriver('CPW', 0)
+                self.setDriver('CLITEMP', round(float(data['temperature']),3))
+                self.setDriver('CV', round(float(data['L1Data']['acVoltage']),3))
+                if data['dcVoltage'] is not None:
+                    self.setDriver('GV1', round(float(data['dcVoltage']),3))
+                self.setDriver('GV2', round(float(data['L1Data']['acCurrent']), 1))
+                self.setDriver('GV3', round(float(data['L1Data']['acFrequency']), 1))
+                if data['inverterMode'] == 'MPPT':
+                    self.setDriver('GV4', 2)
+                elif data['inverterMode'] == 'STARTING':
+                    self.setDriver('GV4', 1)
+                else:
+                    self.setDriver('GV4', 0)
+
+                self.last_date = datetime.now()    
+        
+        
         except Exception as ex:
             LOGGER.error('SEInverter updateInfo failed! {}'.format(ex))
 
@@ -751,7 +764,7 @@ class SEBattery(udi_interface.Node):
 
 
 class SEOverview(udi_interface.Node):
-    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key):
+    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key, last_date, rate_limit):
         super().__init__(polyglot, primary, address, name)
         self.site_id = site_id
         self.site_tz = site_tz
@@ -765,25 +778,36 @@ class SEOverview(udi_interface.Node):
 
 
     def updateInfo(self, poll_flag='longPoll'):
-        if poll_flag == 'longPoll':
-            return True
-
+        
         try:
-            url = '/site/'+self.site_id+'/overview/'+'?api_key='+self.key
-            LOGGER.debug("overview url = " + url)
-            overview_data = _api_request(url)
+            
+            if poll_flag == 'longPoll':
+                return True
 
-            LOGGER.debug(overview_data)
+            last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
+            LOGGER.info('initial overview rate_limit ' + str(self.rate))
+            LOGGER.info('initial overview last_minute ' + str(last_minute))
+                
+            if last_minute >= self.rate:
 
-            if overview_data is None:
-                return False
-            data = overview_data['overview']
-            LOGGER.debug("Overview Data " + str(data['currentPower']['power']))
-            self.setDriver('ST', round(data['lifeTimeData']['energy'] / 1000,1))
-            self.setDriver('GV0', round(data['lastYearData']['energy'] / 1000,1))
-            self.setDriver('GV1', round(data['lastMonthData']['energy'] / 1000,1))
-            self.setDriver('GV2', round(data['lastDayData']['energy'] / 1000,1))
-            self.setDriver('GV3', data['currentPower']['power'])
+                url = '/site/'+self.site_id+'/overview/'+'?api_key='+self.key
+                LOGGER.debug("overview url = " + url)
+                overview_data = _api_request(url)
+
+                LOGGER.debug(overview_data)
+
+                if overview_data is None:
+                    return False
+                data = overview_data['overview']
+                LOGGER.debug("Overview Data " + str(data['currentPower']['power']))
+                self.setDriver('ST', round(data['lifeTimeData']['energy'] / 1000,1))
+                self.setDriver('GV0', round(data['lastYearData']['energy'] / 1000,1))
+                self.setDriver('GV1', round(data['lastMonthData']['energy'] / 1000,1))
+                self.setDriver('GV2', round(data['lastDayData']['energy'] / 1000,1))
+                self.setDriver('GV3', data['currentPower']['power'])
+                
+                self.last_date = datetime.now()  
+
         except Exception as ex:
             LOGGER.error('SEOverview updateInfo failed! {}'.format(ex))
 
@@ -809,7 +833,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.19")
+        polyglot.start("0.3.20")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
