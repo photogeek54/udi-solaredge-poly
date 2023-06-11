@@ -23,6 +23,7 @@ delta = timedelta(minutes=15)
 last_production = -1.0
 last_consumption = -1.0
 last_date = datetime.now()
+rate_limit = 5
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
@@ -85,7 +86,6 @@ class Controller(udi_interface.Node):
         self.address = address
         self.primary = primary
         self.api_key = None
-        self.rate_limit = 5 #default API rate limit = 5 min
         self.conn = None
         self.batteries = []
         self.Parameters = Custom(polyglot, 'customparams')
@@ -125,7 +125,9 @@ class Controller(udi_interface.Node):
             self.poly.Notices['key'] = 'Please specify api_key in NodeServer configuration parameters'
 
         if self.Parameters['rate_limit'] is not None:
-                    self.rate_limit = self.Parameters['rate_limit']
+                self.rate_limit = self.Parameters['rate_limit']
+                LOGGER.info('rate_limit' + self.rate_limit)
+                
         
         if validKey:
             self.api_key = self.Parameters['api_key']
@@ -183,7 +185,7 @@ class Controller(udi_interface.Node):
             LOGGER.info('Found {} site id: {}, name: {}, TZ: {}'.format(site['status'], address, name, site_tz))
             if self.poly.getNode(address) == None:
                 LOGGER.info('Adding site id: {}'.format(address))
-                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key, last_production, last_consumption, last_date))
+                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key, last_production, last_consumption, last_date, rate_limit))
                 self.wait_for_node_event()
             LOGGER.info('Requesting site inventory...')
             site_inv =  _api_request('/site/'+address+'/inventory?startTime='+_start_time(site_tz)+'&endTime='+_end_time(site_tz)+'&api_key='+self.api_key)
@@ -251,7 +253,7 @@ class Controller(udi_interface.Node):
 
 
 class SESite(udi_interface.Node):
-    def __init__(self, polyglot, primary, address, name, site_tz, key, last_production, last_consumption, last_date):
+    def __init__(self, polyglot, primary, address, name, site_tz, key, last_production, last_consumption, last_date, rate_limit):
         super().__init__(polyglot, primary, address, name)
         self.site_tz = site_tz
         self.key = key
@@ -259,6 +261,7 @@ class SESite(udi_interface.Node):
         self.last_production = last_production
         self.last_consumption = last_consumption
         self.last_date = last_date
+        self.rate_limit = rate_limit
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -272,6 +275,9 @@ class SESite(udi_interface.Node):
                 return True #updates every shortpoll
             
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
+            LOGGER.info('rate_limit' + self.rate_limit)
+            LOGGER.info('last_minute' + last_minute)
+                    
             
             if last_minute < self.rate_limit:
                 return True #rate limit
@@ -782,7 +788,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.02")
+        polyglot.start("0.3.03")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
