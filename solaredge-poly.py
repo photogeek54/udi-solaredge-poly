@@ -280,7 +280,7 @@ class SESite(udi_interface.Node):
             LOGGER.info('site last_minute ' + str(last_minute))
                     
             
-            if last_minute > self.rate:
+            if last_minute >= self.rate:
                 
                 datapoint_changed = 0
                 url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
@@ -308,7 +308,7 @@ class SESite(udi_interface.Node):
                         else:
                             LOGGER.debug('no battery telemetries received')
 
-                LOGGER.debug(power_data)
+                LOGGER.info(power_data)
                 if power_data is None:
                     self.setDriver('ST', 0)
                     self.setDriver('GV0', 0)
@@ -434,7 +434,7 @@ class SEEnergy(udi_interface.Node):
                 last_date = ""
             else:
                 for meter in energy_data['energyDetails']['meters']:
-                    LOGGER.info(meter)
+                    LOGGER.debug(meter)
                     if meter['type'] == 'Production':
                         try:
                             datapoint = meter['values'][-2]
@@ -789,7 +789,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.08")
+        polyglot.start("0.3.09")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
