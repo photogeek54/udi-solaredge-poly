@@ -22,7 +22,7 @@ THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 delta = timedelta(minutes=15)
 last_production = -1.0
 last_consumption = -1.0
-last_date = datetime.now()
+last_date = datetime.now() - timedelta(minutes=60) #make sure API gets run initially
 rate_limit = 4
 
 def _start_time(site_tz):
@@ -399,11 +399,12 @@ class SESite(udi_interface.Node):
 
 class SEEnergy(udi_interface.Node):
     # energy last 15 minutes
-    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key, rate_limit):
+    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key, last_date, rate_limit):
         super().__init__(polyglot, primary, address, name)
         self.site_tz = site_tz
         self.key = key
         self.site_id = site_id
+        self.last_date = last_date
         self.rate = rate_limit
         self.batteries = []
 
@@ -418,7 +419,7 @@ class SEEnergy(udi_interface.Node):
             if poll_flag == 'longPoll':
                 return True
 
-            last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
+            last_minute = round(((datetime.now() - datetime.fromisoformat(self.last_date)) / timedelta(seconds=60)),1)
             LOGGER.info('energy rate_limit ' + str(self.rate))
             LOGGER.info('energy last_minute ' + str(last_minute))
 
@@ -522,10 +523,11 @@ class SEEnergy(udi_interface.Node):
               ]
 
 class SEEnergyDay(udi_interface.Node):
-    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key, rate_limit):
+    def __init__(self, polyglot, primary, address, name, site_id, site_tz, key, last_date, rate_limit):
         super().__init__(polyglot, primary, address, name)
         self.site_tz = site_tz
         self.key = key
+        self.last_date = last_date
         self.rate_limit = rate_limit
         self.site_id = site_id
         self.batteries = []
@@ -541,9 +543,9 @@ class SEEnergyDay(udi_interface.Node):
             if poll_flag == 'longPoll':
                 return True
 
-            last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-            LOGGER.info('energy rate_limit ' + str(self.rate))
-            LOGGER.info('energy last_minute ' + str(last_minute))
+            last_minute = round(((datetime.now() - datetime.fromisoformat(self.last_date)) / timedelta(seconds=60)),1)
+            LOGGER.info('energy todayy rate_limit ' + str(self.rate))
+            LOGGER.info('energy today last_minute ' + str(last_minute))
             
             if last_minute >= self.rate_limit:
 
@@ -817,7 +819,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.11")
+        polyglot.start("0.3.12")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
