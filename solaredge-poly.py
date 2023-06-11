@@ -419,7 +419,7 @@ class SEEnergy(udi_interface.Node):
             if poll_flag == 'longPoll':
                 return True
 
-            last_minute = round(((datetime.now() - datetime.fromisoformat(self.last_date)) / timedelta(seconds=60)),1)
+            last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
             LOGGER.info('energy rate_limit ' + str(self.rate))
             LOGGER.info('energy last_minute ' + str(last_minute))
 
@@ -543,13 +543,13 @@ class SEEnergyDay(udi_interface.Node):
             if poll_flag == 'longPoll':
                 return True
 
-            last_minute = round(((datetime.now() - datetime.fromisoformat(self.last_date)) / timedelta(seconds=60)),1)
+            last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
             LOGGER.info('energy todayy rate_limit ' + str(self.rate))
             LOGGER.info('energy today last_minute ' + str(last_minute))
             
             if last_minute >= self.rate_limit:
 
-                url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time_midnight(self.site_tz)+'&api_key='+self.key
+                url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
                 
                 LOGGER.debug ("energy day  " + url)
                 energy_data = _api_request(url)
@@ -819,7 +819,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.13")
+        polyglot.start("0.3.14")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
