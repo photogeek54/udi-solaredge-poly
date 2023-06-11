@@ -228,7 +228,7 @@ class Controller(udi_interface.Node):
             en_addr = "en"+address
             if self.poly.getNode(en_addr) == None:
                     LOGGER.info('Adding Energy')
-                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, self.last_date, self.rate_limit))
+                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, last_date, self.rate_limit))
                     self.wait_for_node_event()
 
             # Adding Daily Energy Node
@@ -236,7 +236,7 @@ class Controller(udi_interface.Node):
             en_addr = "dy"+address
             if self.poly.getNode(en_addr) == None:
                     LOGGER.info('Adding EnergyDay')
-                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, self.last_date, self.rate_limit))
+                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, last_date, self.rate_limit))
                     self.wait_for_node_event()
 
             # Adding overview node
@@ -275,8 +275,8 @@ class SESite(udi_interface.Node):
                 return True #updates every shortpoll
             
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('site rate_limit ' + str(self.rate))
-            LOGGER.info('site last_minute ' + str(last_minute))
+            LOGGER.info('initial site rate_limit ' + str(self.rate))
+            LOGGER.info('initial site last_minute ' + str(last_minute))
                                 
             if last_minute >= self.rate:
                 
@@ -373,9 +373,9 @@ class SESite(udi_interface.Node):
                         
                         if datapoint_changed == 1:
                             self.last_date = datetime.now()
-                            LOGGER.info("last power date " + str(self.last_date))
+                            LOGGER.info("updated power last date " + str(self.last_date))
                         last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-                        LOGGER.info("power last minute " + str(last_minute))
+                        LOGGER.info("updated power last minute " + str(last_minute))
                         self.setDriver('GV4',last_minute) #minute    
             else:
                 self.setDriver('GV4',last_minute) #minute  
@@ -403,7 +403,7 @@ class SEEnergy(udi_interface.Node):
         self.site_tz = site_tz
         self.key = key
         self.site_id = site_id
-        self.last_date = last_date
+        self.en_date = last_date
         self.rate = rate_limit
         self.batteries = []
 
@@ -418,9 +418,9 @@ class SEEnergy(udi_interface.Node):
             if poll_flag == 'longPoll':
                 return True
 
-            last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('energy rate_limit ' + str(self.rate))
-            LOGGER.info('energy last_minute ' + str(last_minute))
+            last_minute = round(((datetime.now() - self.en_date) / timedelta(seconds=60)),1)
+            LOGGER.info('initial energy rate_limit ' + str(self.rate))
+            LOGGER.info('initial energy last_minute ' + str(last_minute))
 
             if last_minute >= self.rate:
 
@@ -498,9 +498,10 @@ class SEEnergy(udi_interface.Node):
                         if 'date' in datapoint:
                             last_date = datapoint['date']  
                         if len(last_date) > 0:
-                            LOGGER.info("last energy date " + last_date)
+                            LOGGER.info("new energy last date " + last_date)
                             last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                            LOGGER.info("energy last minute " + str(last_minute))
+                            self.en_date = datetime.fromisoformat(last_date)
+                            LOGGER.info("new energy last minute " + str(last_minute))
                             self.setDriver('GV4',last_minute) #minute
             else:
                 self.setDriver('GV4',last_minute) #minute
@@ -618,9 +619,10 @@ class SEEnergyDay(udi_interface.Node):
                         if 'date' in datapoint:
                             last_date = datapoint['date']  
                         if len(last_date) > 0:
-                            LOGGER.info("last energy today date " + last_date)
+                            LOGGER.info("updated energy today last date " + last_date)
                             last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                            LOGGER.info("energy today last minute " + str(last_minute))
+                            self.last_date = datetime.fromisoformat(last_date)
+                            LOGGER.info("updated energy today last minute " + str(last_minute))
                             
                     
         except Exception as ex:
@@ -818,7 +820,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.16")
+        polyglot.start("0.3.17")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
