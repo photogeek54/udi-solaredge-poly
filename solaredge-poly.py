@@ -638,7 +638,7 @@ class SEInverter(udi_interface.Node):
         self.site_tz = site_tz
         self.key = key
         self.last_date = last_date
-        self.rate_limit = rate_limit
+        self.rate = rate_limit
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -769,6 +769,8 @@ class SEOverview(udi_interface.Node):
         self.site_id = site_id
         self.site_tz = site_tz
         self.key = key
+        self.last_date = last_date
+        self.rate = rate_limit
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -833,7 +835,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.20")
+        polyglot.start("0.3.21")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
