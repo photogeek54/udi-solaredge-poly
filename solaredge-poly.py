@@ -544,14 +544,14 @@ class SEEnergyDay(udi_interface.Node):
                 return True
 
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('energy 15 rate_limit ' + str(self.rate))
-            LOGGER.info('energy 15 last_minute ' + str(last_minute))
+            LOGGER.info('initial energy today rate_limit ' + str(self.rate))
+            LOGGER.info('initial energy today last_minute ' + str(last_minute))
             
             if last_minute >= self.rate:
 
-                url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+                url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time_midnight(self.site_tz)+'&api_key='+self.key
                 
-                LOGGER.debug ("energy day  " + url)
+                LOGGER.info ("energy today  " + url)
                 energy_data = _api_request(url)
                 
                 
@@ -611,19 +611,8 @@ class SEEnergyDay(udi_interface.Node):
                                 self.setDriver('GV3', 0)
                             if 'value' in datapoint:
                                 self.setDriver('GV3', round(float(datapoint['value'])/1000,1))
-
-                        try:
-                            datapoint = meter['values'][-1]
-                        except:
-                            continue  
-                        if 'date' in datapoint:
-                            last_date = datapoint['date']  
-                        if len(last_date) > 0:
-                            LOGGER.info("updated energy today last date " + last_date)
-                            last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                            self.last_date = datetime.fromisoformat(last_date)
-                            LOGGER.info("updated energy today last minute " + str(last_minute))
-                            
+            
+                        self.last_date = datetime.now()
                     
         except Exception as ex:
             LOGGER.error('SEEnergyDay updateInfo failed! {}'.format(ex))
@@ -820,7 +809,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.18")
+        polyglot.start("0.3.19")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
