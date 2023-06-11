@@ -126,7 +126,7 @@ class Controller(udi_interface.Node):
             self.poly.Notices['key'] = 'Please specify api_key in NodeServer configuration parameters'
 
         if self.Parameters['rate_limit'] is not None:
-                self.rate_limit = self.Parameters['rate_limit']
+                self.rate_limit = float(self.Parameters['rate_limit'])
                 LOGGER.info('parameter rate_limit ' + str(self.rate_limit))
                 
         
@@ -789,7 +789,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.07")
+        polyglot.start("0.3.08")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
