@@ -229,7 +229,7 @@ class Controller(udi_interface.Node):
             en_addr = "en"+address
             if self.poly.getNode(en_addr) == None:
                     LOGGER.info('Adding Energy')
-                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, rate_limit))
+                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, last_date, rate_limit))
                     self.wait_for_node_event()
 
             # Adding Daily Energy Node
@@ -237,7 +237,7 @@ class Controller(udi_interface.Node):
             en_addr = "dy"+address
             if self.poly.getNode(en_addr) == None:
                     LOGGER.info('Adding EnergyDay')
-                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, rate_limit))
+                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, last_date, rate_limit))
                     self.wait_for_node_event()
 
             # Adding overview node
@@ -819,7 +819,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.12")
+        polyglot.start("0.3.13")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
