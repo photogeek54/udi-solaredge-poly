@@ -86,7 +86,6 @@ class Controller(udi_interface.Node):
         self.address = address
         self.primary = primary
         self.api_key = None
-        #self.rate_limit = 5
         self.conn = None
         self.batteries = []
         self.Parameters = Custom(polyglot, 'customparams')
@@ -229,7 +228,7 @@ class Controller(udi_interface.Node):
             en_addr = "en"+address
             if self.poly.getNode(en_addr) == None:
                     LOGGER.info('Adding Energy')
-                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, last_date, rate_limit))
+                    self.poly.addNode(SEEnergy(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, self.last_date, self.rate_limit))
                     self.wait_for_node_event()
 
             # Adding Daily Energy Node
@@ -237,7 +236,7 @@ class Controller(udi_interface.Node):
             en_addr = "dy"+address
             if self.poly.getNode(en_addr) == None:
                     LOGGER.info('Adding EnergyDay')
-                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, last_date, rate_limit))
+                    self.poly.addNode(SEEnergyDay(self.poly, address, en_addr, en_name, address, site_tz, self.api_key, self.last_date, self.rate_limit))
                     self.wait_for_node_event()
 
             # Adding overview node
@@ -499,9 +498,9 @@ class SEEnergy(udi_interface.Node):
                         if 'date' in datapoint:
                             last_date = datapoint['date']  
                         if len(last_date) > 0:
-                            LOGGER.debug("last energy date " + last_date)
+                            LOGGER.info("last energy date " + last_date)
                             last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                            LOGGER.debug("energy last minute " + str(last_minute))
+                            LOGGER.info("energy last minute " + str(last_minute))
                             self.setDriver('GV4',last_minute) #minute
             else:
                 self.setDriver('GV4',last_minute) #minute
@@ -528,7 +527,7 @@ class SEEnergyDay(udi_interface.Node):
         self.site_tz = site_tz
         self.key = key
         self.last_date = last_date
-        self.rate_limit = rate_limit
+        self.rate = rate_limit
         self.site_id = site_id
         self.batteries = []
 
@@ -544,8 +543,8 @@ class SEEnergyDay(udi_interface.Node):
                 return True
 
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('energy today rate_limit ' + str(self.rate_limit))
-            LOGGER.info('energy today last_minute ' + str(last_minute))
+            LOGGER.info('energy 15 rate_limit ' + str(self.rate))
+            LOGGER.info('energy 15 last_minute ' + str(last_minute))
             
             if last_minute >= self.rate_limit:
 
@@ -619,9 +618,9 @@ class SEEnergyDay(udi_interface.Node):
                         if 'date' in datapoint:
                             last_date = datapoint['date']  
                         if len(last_date) > 0:
-                            LOGGER.debug("last energy today date " + last_date)
+                            LOGGER.info("last energy today date " + last_date)
                             last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
-                            LOGGER.debug("energy today last minute " + str(last_minute))
+                            LOGGER.info("energy today last minute " + str(last_minute))
                             
                     
         except Exception as ex:
@@ -819,7 +818,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.15")
+        polyglot.start("0.3.16")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
