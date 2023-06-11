@@ -547,7 +547,7 @@ class SEEnergyDay(udi_interface.Node):
             LOGGER.info('energy 15 rate_limit ' + str(self.rate))
             LOGGER.info('energy 15 last_minute ' + str(last_minute))
             
-            if last_minute >= self.rate_limit:
+            if last_minute >= self.rate:
 
                 url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
                 
@@ -820,7 +820,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.17")
+        polyglot.start("0.3.18")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
