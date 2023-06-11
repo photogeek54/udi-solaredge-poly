@@ -275,111 +275,111 @@ class SESite(udi_interface.Node):
                 return True #updates every shortpoll
             
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('site rate_limit' + str(self.rate_limit))
-            LOGGER.info('site last_minute' + str(last_minute))
+            LOGGER.info('site rate_limit ' + str(self.rate_limit))
+            LOGGER.info('site last_minute ' + str(last_minute))
                     
             
-            if last_minute < self.rate_limit:
-                return True #rate limit
-
-            datapoint_changed = 0
-            url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
-            
-            LOGGER.info ("power  " + url)
-            power_data = _api_request(url)
-            
-            '''
-               Is this getting all the battery info (all sites)? not just
-               the batteries for this site?
-            '''
-            if len(self.batteries) > 0:
-
-                url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.batteries))+'&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
-
+            if last_minute > self.rate_limit:
                 
-                storage_data = _api_request(url)
+                datapoint_changed = 0
+                url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
+                
+                LOGGER.info ("power  " + url)
+                power_data = _api_request(url)
+                
+                '''
+                Is this getting all the battery info (all sites)? not just
+                the batteries for this site?
+                '''
+                if len(self.batteries) > 0:
 
-                LOGGER.debug(storage_data)
-                for battery in storage_data['storageData']['batteries']:
-                    batt_sn = battery['serialNumber']
-                    batt_addr = battery['serialNumber'].replace('-','').lower()[:14]
-                    if battery['telemetryCount'] > 0:
-                        self.poly.getNode(batt_addr).updateData(battery['telemetries'])
-                    else:
-                        LOGGER.debug('no battery telemetries received')
+                    url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.batteries))+'&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
 
-            LOGGER.debug(power_data)
-            if power_data is None:
-                self.setDriver('ST', 0)
-                self.setDriver('GV0', 0)
-                self.setDriver('GV1', 0)
-                self.setDriver('GV2', 0)
-                self.setDriver('GV3', 0)
-                self.setDriver('GV4', 0)
-            else:
-                for meter in power_data['powerDetails']['meters']:
-                    if meter['type'] == 'Production':
-                        try:
-                            datapoint = meter['values'][-1]
-                        except:
-                            continue
-                        if len(datapoint) == 0:
-                            self.setDriver('ST', 0)
-                        if 'value' in datapoint:
-                            if round(float(datapoint['value']),3) != self.last_production:
-                                datapoint_changed = 1
-                                self.last_production = round(float(datapoint['value']),3) 
-                                LOGGER.debug("self.last_production " + str(self.last_production))
-                            self.setDriver('ST', round(float(datapoint['value']),3))
-                    elif meter['type'] == 'Consumption':
-                        try:
-                            datapoint = meter['values'][-1]
-                        except:
-                            continue
-                        if len(datapoint) == 0:
-                            self.setDriver('GV0', 0)
-                        if 'value' in datapoint:
-                            if round(float(datapoint['value']),3) != self.last_consumption:
-                                datapoint_changed = 1
-                                self.last_consumption = round(float(datapoint['value']),3)
-                                LOGGER.debug("self.last_consumption " + str(self.last_consumption))
-                            self.setDriver('GV0', round(float(datapoint['value']),3))
-                    elif meter['type'] == 'Purchased':
-                        try:
-                            datapoint = meter['values'][-1]
-                        except:
-                            continue
-                        if len(datapoint) == 0:
-                            self.setDriver('GV1', 0)
-                        if 'value' in datapoint:
-                            self.setDriver('GV1', round(float(datapoint['value']),3))
-                    elif meter['type'] == 'SelfConsumption':
-                        try:
-                            datapoint = meter['values'][-1]
-                        except:
-                            continue
-                        if len(datapoint) == 0:
-                            self.setDriver('GV2', 0)
-                        if 'value' in datapoint:
-                            self.setDriver('GV2', round(float(datapoint['value']),3))
-                    elif meter['type'] == 'FeedIn':
-                        try:
-                            datapoint = meter['values'][-1]
-                        except:
-                            continue
-                        if len(datapoint) == 0:
-                            self.setDriver('GV3', 0)
-                        if 'value' in datapoint:
-                            self.setDriver('GV3', round(float(datapoint['value']),3))
-        
                     
-                    if datapoint_changed == 1:
-                        self.last_date = datetime.now()
-                        LOGGER.info("last power date " + str(self.last_date))
-                    last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-                    LOGGER.info("power last minute " + str(last_minute))
-                    self.setDriver('GV4',last_minute) #minute    
-                            
+                    storage_data = _api_request(url)
+
+                    LOGGER.debug(storage_data)
+                    for battery in storage_data['storageData']['batteries']:
+                        batt_sn = battery['serialNumber']
+                        batt_addr = battery['serialNumber'].replace('-','').lower()[:14]
+                        if battery['telemetryCount'] > 0:
+                            self.poly.getNode(batt_addr).updateData(battery['telemetries'])
+                        else:
+                            LOGGER.debug('no battery telemetries received')
+
+                LOGGER.debug(power_data)
+                if power_data is None:
+                    self.setDriver('ST', 0)
+                    self.setDriver('GV0', 0)
+                    self.setDriver('GV1', 0)
+                    self.setDriver('GV2', 0)
+                    self.setDriver('GV3', 0)
+                    self.setDriver('GV4', 0)
+                else:
+                    for meter in power_data['powerDetails']['meters']:
+                        if meter['type'] == 'Production':
+                            try:
+                                datapoint = meter['values'][-1]
+                            except:
+                                continue
+                            if len(datapoint) == 0:
+                                self.setDriver('ST', 0)
+                            if 'value' in datapoint:
+                                if round(float(datapoint['value']),3) != self.last_production:
+                                    datapoint_changed = 1
+                                    self.last_production = round(float(datapoint['value']),3) 
+                                    LOGGER.debug("self.last_production " + str(self.last_production))
+                                self.setDriver('ST', round(float(datapoint['value']),3))
+                        elif meter['type'] == 'Consumption':
+                            try:
+                                datapoint = meter['values'][-1]
+                            except:
+                                continue
+                            if len(datapoint) == 0:
+                                self.setDriver('GV0', 0)
+                            if 'value' in datapoint:
+                                if round(float(datapoint['value']),3) != self.last_consumption:
+                                    datapoint_changed = 1
+                                    self.last_consumption = round(float(datapoint['value']),3)
+                                    LOGGER.debug("self.last_consumption " + str(self.last_consumption))
+                                self.setDriver('GV0', round(float(datapoint['value']),3))
+                        elif meter['type'] == 'Purchased':
+                            try:
+                                datapoint = meter['values'][-1]
+                            except:
+                                continue
+                            if len(datapoint) == 0:
+                                self.setDriver('GV1', 0)
+                            if 'value' in datapoint:
+                                self.setDriver('GV1', round(float(datapoint['value']),3))
+                        elif meter['type'] == 'SelfConsumption':
+                            try:
+                                datapoint = meter['values'][-1]
+                            except:
+                                continue
+                            if len(datapoint) == 0:
+                                self.setDriver('GV2', 0)
+                            if 'value' in datapoint:
+                                self.setDriver('GV2', round(float(datapoint['value']),3))
+                        elif meter['type'] == 'FeedIn':
+                            try:
+                                datapoint = meter['values'][-1]
+                            except:
+                                continue
+                            if len(datapoint) == 0:
+                                self.setDriver('GV3', 0)
+                            if 'value' in datapoint:
+                                self.setDriver('GV3', round(float(datapoint['value']),3))
+            
+                        
+                        if datapoint_changed == 1:
+                            self.last_date = datetime.now()
+                            LOGGER.info("last power date " + str(self.last_date))
+                        last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
+                        LOGGER.info("power last minute " + str(last_minute))
+                        self.setDriver('GV4',last_minute) #minute    
+            else:
+                        self.setDriver('GV4',last_minute) #minute  
         except Exception as ex:
             LOGGER.error('SESite updateInfo failed! {}'.format(ex))
 
@@ -788,7 +788,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.04")
+        polyglot.start("0.3.05")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
