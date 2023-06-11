@@ -23,7 +23,7 @@ delta = timedelta(minutes=15)
 last_production = -1.0
 last_consumption = -1.0
 last_date = datetime.now() - timedelta(minutes=60) #make sure API gets run initially
-rate_limit = 4
+#rate_limit = 4
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
@@ -275,7 +275,7 @@ class SESite(udi_interface.Node):
                 return True #updates every shortpoll
             
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('initial site rate_limit ' + str(self.rate))
+            LOGGER.debug('initial site rate_limit ' + str(self.rate))
             LOGGER.info('initial site last_minute ' + str(last_minute))
                                 
             if last_minute >= self.rate:
@@ -373,9 +373,9 @@ class SESite(udi_interface.Node):
                         
                         if datapoint_changed == 1:
                             self.last_date = datetime.now()
-                            LOGGER.info("updated power last date " + str(self.last_date))
+                            LOGGER.debug("updated power last date " + str(self.last_date))
                         last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-                        LOGGER.info("updated power last minute " + str(last_minute))
+                        LOGGER.debug("updated power last minute " + str(last_minute))
                         self.setDriver('GV4',last_minute) #minute    
             else:
                 self.setDriver('GV4',last_minute) #minute  
@@ -419,7 +419,6 @@ class SEEnergy(udi_interface.Node):
                 return True
 
             last_minute = round(((datetime.now() - self.en_date) / timedelta(seconds=60)),1)
-            LOGGER.info('initial energy rate_limit ' + str(self.rate))
             LOGGER.info('initial energy last_minute ' + str(last_minute))
 
             if last_minute >= self.rate:
@@ -498,10 +497,10 @@ class SEEnergy(udi_interface.Node):
                         if 'date' in datapoint:
                             last_date = datapoint['date']  
                         if len(last_date) > 0:
-                            LOGGER.info("new energy last date " + last_date)
+                            LOGGER.debug("new energy last date " + last_date)
                             last_minute = round(((datetime.now() - datetime.fromisoformat(last_date)) / timedelta(seconds=60)),1)
                             self.en_date = datetime.fromisoformat(last_date)
-                            LOGGER.info("new energy last minute " + str(last_minute))
+                            LOGGER.debug("new energy last minute " + str(last_minute))
                             self.setDriver('GV4',last_minute) #minute
             else:
                 self.setDriver('GV4',last_minute) #minute
@@ -544,7 +543,6 @@ class SEEnergyDay(udi_interface.Node):
                 return True
 
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('initial energy today rate_limit ' + str(self.rate))
             LOGGER.info('initial energy today last_minute ' + str(last_minute))
             
             if last_minute >= self.rate:
@@ -653,7 +651,6 @@ class SEInverter(udi_interface.Node):
                 return True
 
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('initial inverter rate_limit ' + str(self.rate))
             LOGGER.info('initial inverter last_minute ' + str(last_minute))
                 
             if last_minute >= self.rate:
@@ -787,8 +784,7 @@ class SEOverview(udi_interface.Node):
                 return True
 
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('initial overview rate_limit ' + str(self.rate))
-            LOGGER.info('initial overview last_minute ' + str(last_minute))
+            LOGGER.debug('initial overview last_minute ' + str(last_minute))
                 
             if last_minute >= self.rate:
 
@@ -835,7 +831,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.21")
+        polyglot.start("0.3.22")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
