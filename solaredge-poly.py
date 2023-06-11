@@ -85,6 +85,7 @@ class Controller(udi_interface.Node):
         self.address = address
         self.primary = primary
         self.api_key = None
+        self.rate_limit = 5 #default API rate limit = 5 min
         self.conn = None
         self.batteries = []
         self.Parameters = Custom(polyglot, 'customparams')
@@ -123,6 +124,9 @@ class Controller(udi_interface.Node):
         else:
             self.poly.Notices['key'] = 'Please specify api_key in NodeServer configuration parameters'
 
+        if self.Parameters['rate_limit'] is not None:
+                    self.rate_limit = self.Parameters['rate_limit']
+        
         if validKey:
             self.api_key = self.Parameters['api_key']
             data = _api_request('/version/current?api_key='+self.api_key)
@@ -266,6 +270,11 @@ class SESite(udi_interface.Node):
         try:
             if poll_flag == 'longPoll':
                 return True #updates every shortpoll
+            
+            last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
+            
+            if last_minute < self.rate_limit:
+                return True #rate limit
 
             datapoint_changed = 0
             url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
@@ -773,7 +782,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.2.06")
+        polyglot.start("0.3.01")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
