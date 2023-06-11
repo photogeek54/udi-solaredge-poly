@@ -23,7 +23,6 @@ delta = timedelta(minutes=15)
 last_production = -1.0
 last_consumption = -1.0
 last_date = datetime.now() - timedelta(minutes=60) #make sure API gets run initially
-rate_limit = 5
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
@@ -127,6 +126,9 @@ class Controller(udi_interface.Node):
         if self.Parameters['rate_limit'] is not None:
                 self.rate_limit = float(self.Parameters['rate_limit'])
                 LOGGER.info('parameter rate_limit ' + str(self.rate_limit))
+        else:
+            self.rate_limit = 5
+            LOGGER.info('parameter rate_limit ' + str(self.rate_limit))
                 
         
         if validKey:
@@ -831,7 +833,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.23")
+        polyglot.start("0.3.24")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
