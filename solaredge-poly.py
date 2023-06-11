@@ -86,6 +86,7 @@ class Controller(udi_interface.Node):
         self.address = address
         self.primary = primary
         self.api_key = None
+        #self.rate_limit = 5
         self.conn = None
         self.batteries = []
         self.Parameters = Custom(polyglot, 'customparams')
@@ -185,7 +186,7 @@ class Controller(udi_interface.Node):
             LOGGER.info('Found {} site id: {}, name: {}, TZ: {}'.format(site['status'], address, name, site_tz))
             if self.poly.getNode(address) == None:
                 LOGGER.info('Adding site id: {}'.format(address))
-                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key, last_production, last_consumption, last_date, rate_limit))
+                self.poly.addNode(SESite(self.poly, address, address, name, site_tz, self.api_key, last_production, last_consumption, last_date, self.rate_limit))
                 self.wait_for_node_event()
             LOGGER.info('Requesting site inventory...')
             site_inv =  _api_request('/site/'+address+'/inventory?startTime='+_start_time(site_tz)+'&endTime='+_end_time(site_tz)+'&api_key='+self.api_key)
@@ -261,7 +262,7 @@ class SESite(udi_interface.Node):
         self.last_production = last_production
         self.last_consumption = last_consumption
         self.last_date = last_date
-        #self.rate_limit = rate_limit
+        self.rate = rate_limit
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.updateInfo)
@@ -275,11 +276,11 @@ class SESite(udi_interface.Node):
                 return True #updates every shortpoll
             
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('site rate_limit ' + str(self.rate_limit))
+            LOGGER.info('site rate_limit ' + str(self.rate))
             LOGGER.info('site last_minute ' + str(last_minute))
                     
             
-            if last_minute > self.rate_limit:
+            if last_minute > self.rate:
                 
                 datapoint_changed = 0
                 url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
@@ -788,7 +789,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.06")
+        polyglot.start("0.3.07")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
