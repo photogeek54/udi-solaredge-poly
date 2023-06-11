@@ -126,7 +126,7 @@ class Controller(udi_interface.Node):
 
         if self.Parameters['rate_limit'] is not None:
                 self.rate_limit = self.Parameters['rate_limit']
-                LOGGER.info('rate_limit' + self.rate_limit)
+                LOGGER.info('parameter rate_limit' + str(self.rate_limit))
                 
         
         if validKey:
@@ -275,8 +275,8 @@ class SESite(udi_interface.Node):
                 return True #updates every shortpoll
             
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
-            LOGGER.info('rate_limit' + self.rate_limit)
-            LOGGER.info('last_minute' + last_minute)
+            LOGGER.info('site rate_limit' + str(self.rate_limit))
+            LOGGER.info('site last_minute' + str(last_minute))
                     
             
             if last_minute < self.rate_limit:
@@ -788,7 +788,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.03")
+        polyglot.start("0.3.04")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
