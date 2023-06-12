@@ -13,7 +13,7 @@ LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
 
 SE_API_URL = 'monitoringapi.solaredge.com'
-SINGLE_PHASE = [ 'SE3000', 'SE3000A', 'SE3800', 'SE3800A', 'SE3800H', 'SE5000', 'SE6000', 'SE7600', 'SE7600A', 'SE10000', 'SE11400', 'SE5000H', 'SE7600H', 'SE10000H', 'SE10000A' ]
+SINGLE_PHASE = [ 'SE3000', 'SE3000A', 'SE3800', 'SE3800A', 'SE3800H', 'SE5000', 'SE6000', 'SE6000H', 'SE7600', 'SE7600A', 'SE10000', 'SE11400', 'SE5000H', 'SE7600H', 'SE10000H', 'SE10000A' ]
 THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 
 
@@ -398,7 +398,7 @@ class SEBattery(udi_interface.Node):
 if __name__ == "__main__":
     try:
         polyglot = udi_interface.Interface([])
-        polyglot.start("1.0.1")
+        polyglot.start("1.0.2")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
