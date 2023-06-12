@@ -423,7 +423,7 @@ class SEEnergy(udi_interface.Node):
             last_minute = round(((datetime.now() - self.en_date) / timedelta(seconds=60)),1)
             LOGGER.info('initial energy last_minute ' + str(last_minute))
 
-            if last_minute >= self.rate:
+            if ((last_minute >= self.rate) | (last_minute == 0.0)):
 
                 url = '/site/'+self.site_id+'/energyDetails?timeUnit=QUARTER_OF_AN_HOUR&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
                 
@@ -547,7 +547,7 @@ class SEEnergyDay(udi_interface.Node):
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
             LOGGER.info('initial energy today last_minute ' + str(last_minute))
             
-            if last_minute >= self.rate:
+            if ((last_minute >= self.rate) | (last_minute == 0.0)):
 
                 url = '/site/'+self.site_id+'/energyDetails?timeUnit=DAY&startTime='+_start_time_midnight(self.site_tz)+'&endTime='+_end_time_midnight(self.site_tz)+'&api_key='+self.key
                 
@@ -655,7 +655,7 @@ class SEInverter(udi_interface.Node):
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
             LOGGER.info('initial inverter last_minute ' + str(last_minute))
                 
-            if last_minute >= self.rate:
+            if ((last_minute >= self.rate) | (last_minute == 0.0)):
 
                 url = '/equipment/'+self.site_id+'/'+self.serial_num+'/data?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
                 inverter_data = _api_request(url)
@@ -788,7 +788,7 @@ class SEOverview(udi_interface.Node):
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
             LOGGER.debug('initial overview last_minute ' + str(last_minute))
                 
-            if last_minute >= self.rate:
+            if ((last_minute >= self.rate) | (last_minute == 0.0)):
 
                 url = '/site/'+self.site_id+'/overview/'+'?api_key='+self.key
                 LOGGER.debug("overview url = " + url)
@@ -833,7 +833,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.25")
+        polyglot.start("0.3.26")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
