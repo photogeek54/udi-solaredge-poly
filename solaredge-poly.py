@@ -280,7 +280,7 @@ class SESite(udi_interface.Node):
             LOGGER.debug('initial site rate_limit ' + str(self.rate))
             LOGGER.info('initial site last_minute ' + str(last_minute))
                                 
-            if last_minute >= self.rate:
+            if ((last_minute >= self.rate) | (last_minute == 0.0)):
                 
                 datapoint_changed = 0
                 url = '/site/'+self.address+'/powerDetails?startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
@@ -833,7 +833,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("0.3.24")
+        polyglot.start("0.3.25")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
