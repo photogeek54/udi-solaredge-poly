@@ -782,7 +782,7 @@ class SEOverview(udi_interface.Node):
         
         try:
             
-            if poll_flag == 'longPoll':
+            if poll_flag == 'ShortPoll':
                 return True
 
             last_minute = round(((datetime.now() - self.last_date) / timedelta(seconds=60)),1)
