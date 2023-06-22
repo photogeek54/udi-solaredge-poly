@@ -749,7 +749,8 @@ class SEBattery(udi_interface.Node):
         data = batt_data[-1]
         self.setDriver('ST', data['power'])
         self.setDriver('BATLVL', round(float(data['batteryPercentageState']), 1))
-
+        # could add additional telemetries if needed (i.e. batteryState, lifeTimeEnergyDischarged, lifeTimeEnergyCharged, fullPackEnergyAvailable, internalTemp, ACGridCharging)
+    
     def query(self, command=None):
         self.reportDrivers()
 
