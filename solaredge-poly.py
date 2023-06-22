@@ -182,8 +182,8 @@ class Controller(udi_interface.Node):
             LOGGER.warning('No sites found')
             return False
         for site in site_list['sites']['site']:
-            name = re.sub(r'[^A-Za-z0-9 ]+', '', site['name'])
-            #name = site['name']
+            name = site['name']
+            name = re.sub(r'[^A-Za-z0-9 ]+', '', name)
             site_tz = site['location']['timeZone']
             address = str(site['id'])
             LOGGER.info('Found {} site id: {}, name: {}, TZ: {}'.format(site['status'], address, name, site_tz))
@@ -835,7 +835,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("1.1.01")
+        polyglot.start("1.1.02")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
