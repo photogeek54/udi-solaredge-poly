@@ -23,7 +23,7 @@ THREE_PHASE = [ 'SE9K', 'SE10K', 'SE14.4K', 'SE20K', 'SE33.3K' ]
 delta = timedelta(minutes=15)
 last_production = -1.0
 last_consumption = -1.0
-last_date = datetime.now() - timedelta(minutes=60) #make sure API gets run initially
+last_date = datetime.now() - timedelta(minutes=6) #make sure API gets run initially
 
 def _start_time(site_tz):
     # Returns site datetime - 60 minutes
