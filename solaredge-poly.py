@@ -220,6 +220,7 @@ class Controller(udi_interface.Node):
                 batt_name = battery['name']
                 batt_sn = battery['SN']
                 batt_addr = battery['SN'].replace('-','').lower()[:14]
+                LOGGER.debug('Found Battery {}'.format(batt_sn))
                 if self.poly.getNode(batt_addr) == None:
                     LOGGER.info('Adding battery {}'.format(batt_sn))
                     self.poly.addNode(SEBattery(self.poly, address, batt_addr, batt_name, address, batt_sn, site_tz, battery))
@@ -836,7 +837,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("1.1.02")
+        polyglot.start("1.1.03")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
