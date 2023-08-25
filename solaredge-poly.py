@@ -306,7 +306,7 @@ class SESite(udi_interface.Node):
                     LOGGER.debug(storage_data)
                     for battery in storage_data['storageData']['batteries']:
                         batt_sn = battery['serialNumber']
-                        batt_addr = battery['serialNumber'].replace('-','').lower()[:14]
+                        batt_addr = battery['serialNumber'].replace('-','').lower()[:7] + battery['serialNumber'].replace('-','').lower()[-7:]
                         if battery['telemetryCount'] > 0:
                             self.poly.getNode(batt_addr).updateData(battery['telemetries'])
                         else:
