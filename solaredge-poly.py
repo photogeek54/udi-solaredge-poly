@@ -751,6 +751,11 @@ class SEBattery(udi_interface.Node):
         data = batt_data[-1]
         self.setDriver('ST', data['power'])
         self.setDriver('BATLVL', round(float(data['batteryPercentageState']), 1))
+        self.setDriver('GV0', round(float(data['lifeTimeEnergyDischarged']), 1))
+        self.setDriver('GV1', round(float(data['lifeTimeEnergyCharged']), 1))
+        self.setDriver('GV2', round(float(data['fullPackEnergyAvailable']), 1))
+        self.setDriver('GV3', round(float(data['internalTemp']), 1))
+        self.setDriver('GV4', round(float(data['ACGridCharging']), 1))
         # could add additional telemetries if needed (i.e. batteryState, lifeTimeEnergyDischarged, lifeTimeEnergyCharged, fullPackEnergyAvailable, internalTemp, ACGridCharging)
     
     def query(self, command=None):
@@ -758,7 +763,12 @@ class SEBattery(udi_interface.Node):
 
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 73},
                {'driver': 'BATLVL', 'value': 0, 'uom': 51},
-               {'driver': 'GPV', 'value': 0, 'uom': 56}
+               {'driver': 'GPV', 'value': 0, 'uom': 56},
+               {'driver': 'GV0', 'value': 0, 'uom': 56},
+               {'driver': 'GV1', 'value': 0, 'uom': 56},
+               {'driver': 'GV2', 'value': 0, 'uom': 56},
+               {'driver': 'GV3', 'value': 0, 'uom': 56},
+               {'driver': 'GV4', 'value': 0, 'uom': 56},
               ]
 
     id = 'SEBATT'
@@ -838,7 +848,7 @@ if __name__ == "__main__":
     try:
        
         polyglot = udi_interface.Interface([])
-        polyglot.start("1.1.03")
+        polyglot.start("1.1.04")
         Controller(polyglot, 'controller', 'controller', 'SolarEdge')
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
