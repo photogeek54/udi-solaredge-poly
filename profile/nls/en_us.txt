@@ -52,6 +52,11 @@ ND-SEBATT-ICON = Electricity
 ST-BATT-ST-NAME = Power State
 ST-BATT-BATLVL-NAME = Charge state
 ST-BATT-GPV-NAME = Nameplate capacity
+ST-BATT-GV0-NAME = Lifetime Energy Discharged
+ST-BATT-GV1-NAME = Lifetime Energy Charged
+ST-BATT-GV2-NAME = Full Pack Energy Available
+ST-BATT-GV3-NAME = Internal Temp
+ST-BATT-GV4-NAME = AC Grid Charging
 
 MODE_SEL-0 = Unknown
 MODE_SEL-1 = Starting

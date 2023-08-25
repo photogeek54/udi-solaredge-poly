@@ -87,6 +87,11 @@
             <st id="ST" editor="WATTCH" />
             <st id="BATLVL" editor="CHARGE" />
             <st id="GPV" editor="CAPACITY" />
+            <st id="GV0" editor="KWH" />
+            <st id="GV1" editor="KHW" />
+            <st id="GV2" editor="KWH" />
+            <st id="GV3" editor="TEMPC" />
+            <st id="GV4" editor="VOLT" />
         </sts>
         <cmds>
             <sends />
