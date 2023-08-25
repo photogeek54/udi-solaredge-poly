@@ -219,7 +219,8 @@ class Controller(udi_interface.Node):
             for battery in site_inv['Inventory']['batteries']:
                 batt_name = battery['name']
                 batt_sn = battery['SN']
-                batt_addr = battery['SN'].replace('-','').lower()[:14]
+                # use first and last 7 characters of Battery SN as the first 14 might not be unique in a single site
+                batt_addr = battery['SN'].replace('-','').lower()[:7] + battery['SN'].replace('-','').lower()[:-7] 
                 LOGGER.debug('Found Battery {}'.format(batt_sn))
                 if self.poly.getNode(batt_addr) == None:
                     LOGGER.info('Adding battery {}'.format(batt_sn))
