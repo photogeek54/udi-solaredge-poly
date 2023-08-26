@@ -299,8 +299,7 @@ class SESite(udi_interface.Node):
                 if len(self.batteries) > 0:
 
                     url = '/site/'+self.address+'/storageData?serials='+','.join(map(str, self.batteries))+'&startTime='+_start_time(self.site_tz)+'&endTime='+_end_time(self.site_tz)+'&api_key='+self.key
-
-                    
+                    LOGGER.info ("storagedata  " + url)
                     storage_data = _api_request(url)
 
                     LOGGER.debug(storage_data)
