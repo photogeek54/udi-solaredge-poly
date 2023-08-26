@@ -764,11 +764,11 @@ class SEBattery(udi_interface.Node):
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 73},
                {'driver': 'BATLVL', 'value': 0, 'uom': 51},
                {'driver': 'GPV', 'value': 0, 'uom': 56},
-               {'driver': 'GV0', 'value': 0, 'uom': 56},
-               {'driver': 'GV1', 'value': 0, 'uom': 56},
-               {'driver': 'GV2', 'value': 0, 'uom': 56},
-               {'driver': 'GV3', 'value': 0, 'uom': 56},
-               {'driver': 'GV4', 'value': 0, 'uom': 56},
+               {'driver': 'GV0', 'value': 0, 'uom': 33},
+               {'driver': 'GV1', 'value': 0, 'uom': 33},
+               {'driver': 'GV2', 'value': 0, 'uom': 33},
+               {'driver': 'GV3', 'value': 0, 'uom': 4},
+               {'driver': 'GV4', 'value': 0, 'uom': 72}
               ]
 
     id = 'SEBATT'
